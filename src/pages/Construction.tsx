@@ -9,10 +9,25 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { mockActivities, mockDailyExecutions, mockWorkQuantities } from "@/lib/mock-data";
-import { Activity, DailyExecution } from "@/lib/types";
+import { Activity, DailyExecution, IssueCategory } from "@/lib/types";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
+
+const ISSUE_CATEGORIES: IssueCategory[] = [
+  'Lluvia moderada',
+  'Tormenta',
+  'Falta de suministro',
+  'Vandalismo',
+  'Delincuencia organizada',
+  'Paros o manifestaciones en las vías',
+  'Falta de especificaciones técnicas en los diseños',
+  'RTB incompleto',
+  'Daño de maquinaria o herramienta',
+  'Otros'
+];
 
 const Construction = () => {
   const [activities, setActivities] = useState<Activity[]>(mockActivities);
@@ -32,7 +47,9 @@ const Construction = () => {
     activityId: "",
     executedQuantity: 0,
     date: new Date().toISOString().split('T')[0],
-    notes: ""
+    notes: "",
+    issueCategory: undefined as IssueCategory | undefined,
+    issueOtherDescription: ""
   });
   
   // Reset form functions
@@ -51,7 +68,9 @@ const Construction = () => {
       activityId: "",
       executedQuantity: 0,
       date: new Date().toISOString().split('T')[0],
-      notes: ""
+      notes: "",
+      issueCategory: undefined,
+      issueOtherDescription: ""
     });
   };
   
@@ -95,14 +114,19 @@ const Construction = () => {
     }
     
     // Create new activity
+    const workQuantity = mockWorkQuantities.find(wq => wq.description === newActivity.name);
+    
     const newActivityRecord: Activity = {
       id: `act-${Date.now()}`,
+      projectId: "project-1", // Default project ID
+      workQuantityId: workQuantity?.id || "",
       name: newActivity.name,
       contractor: newActivity.contractor,
       estimatedQuantity: newActivity.estimatedQuantity,
       executedQuantity: 0,
       unit: newActivity.unit,
       date: newActivity.date,
+      expectedExecutionDate: workQuantity?.expectedExecutionDate,
       progress: 0
     };
     
@@ -149,6 +173,16 @@ const Construction = () => {
       return;
     }
     
+    // Check if 'Otros' is selected but no description provided
+    if (newExecution.issueCategory === 'Otros' && !newExecution.issueOtherDescription.trim()) {
+      toast({
+        title: "Error",
+        description: "Debe proporcionar una descripción para la categoría 'Otros'",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     // Calculate total executed so far
     const totalExecutedSoFar = executions
       .filter(e => e.activityId === newExecution.activityId)
@@ -178,11 +212,14 @@ const Construction = () => {
     // Create new execution record
     const newExecutionRecord: DailyExecution = {
       id: `exe-${Date.now()}`,
+      projectId: "project-1", // Default project ID
       activityId: newExecution.activityId,
       activityName: activity.name,
       executedQuantity: newExecution.executedQuantity,
       date: newExecution.date,
-      notes: newExecution.notes
+      notes: newExecution.notes,
+      issueCategory: newExecution.issueCategory,
+      issueOtherDescription: newExecution.issueOtherDescription
     };
     
     setExecutions([newExecutionRecord, ...executions]);
@@ -258,6 +295,7 @@ const Construction = () => {
                         {mockWorkQuantities.map(wq => (
                           <SelectItem key={wq.id} value={wq.description}>
                             {wq.description}
+                            {wq.expectedExecutionDate && ` (Fecha esperada: ${format(new Date(wq.expectedExecutionDate), 'dd/MM/yyyy')})`}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -333,6 +371,7 @@ const Construction = () => {
                         <th className="text-left p-2">Cant. Ejecutada</th>
                         <th className="text-left p-2">Unidad</th>
                         <th className="text-left p-2">Fecha</th>
+                        <th className="text-left p-2">Fecha Esperada</th>
                         <th className="text-left p-2">Avance</th>
                       </tr>
                     </thead>
@@ -345,6 +384,7 @@ const Construction = () => {
                           <td className="p-2">{activity.executedQuantity}</td>
                           <td className="p-2">{activity.unit}</td>
                           <td className="p-2">{format(new Date(activity.date), 'dd/MM/yyyy')}</td>
+                          <td className="p-2">{activity.expectedExecutionDate ? format(new Date(activity.expectedExecutionDate), 'dd/MM/yyyy') : 'No definida'}</td>
                           <td className="p-2 w-36">
                             <div className="flex items-center gap-2">
                               <Progress value={activity.progress} className="h-2" />
@@ -428,6 +468,9 @@ const Construction = () => {
                               <p>Estimado: <span className="font-medium">{activity.estimatedQuantity} {activity.unit}</span></p>
                               <p>Ejecutado: <span className="font-medium">{totalExecuted} {activity.unit}</span></p>
                               <p>Pendiente: <span className="font-medium">{Math.max(0, activity.estimatedQuantity - totalExecuted)} {activity.unit}</span></p>
+                              {activity.expectedExecutionDate && (
+                                <p>Fecha esperada: <span className="font-medium">{format(new Date(activity.expectedExecutionDate), 'dd/MM/yyyy')}</span></p>
+                              )}
                             </>
                           );
                         })()}
@@ -437,13 +480,46 @@ const Construction = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="execution-notes">Novedades</Label>
+                  <Label htmlFor="execution-notes">Novedades (Notas Generales)</Label>
                   <Textarea
                     id="execution-notes"
                     placeholder="Ingrese novedades o comentarios sobre la ejecución"
                     value={newExecution.notes}
                     onChange={e => setNewExecution({...newExecution, notes: e.target.value})}
                   />
+                </div>
+                
+                <div className="space-y-4">
+                  <Label>Categoría de Novedad</Label>
+                  <RadioGroup
+                    value={newExecution.issueCategory}
+                    onValueChange={(value) => setNewExecution({
+                      ...newExecution, 
+                      issueCategory: value as IssueCategory,
+                      issueOtherDescription: value !== 'Otros' ? '' : newExecution.issueOtherDescription
+                    })}
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {ISSUE_CATEGORIES.map(category => (
+                        <div key={category} className="flex items-center space-x-2">
+                          <RadioGroupItem value={category} id={`category-${category}`} />
+                          <Label htmlFor={`category-${category}`}>{category}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </RadioGroup>
+                  
+                  {newExecution.issueCategory === 'Otros' && (
+                    <div className="pl-6 space-y-2">
+                      <Label htmlFor="other-description">Especificar</Label>
+                      <Input
+                        id="other-description"
+                        placeholder="Describa la novedad"
+                        value={newExecution.issueOtherDescription}
+                        onChange={e => setNewExecution({...newExecution, issueOtherDescription: e.target.value})}
+                      />
+                    </div>
+                  )}
                 </div>
               </CardContent>
               <CardFooter className="flex justify-end space-x-2">
@@ -468,6 +544,7 @@ const Construction = () => {
                         <th className="text-left p-2">Fecha</th>
                         <th className="text-left p-2">Actividad</th>
                         <th className="text-left p-2">Cantidad Ejecutada</th>
+                        <th className="text-left p-2">Categoría</th>
                         <th className="text-left p-2">Novedades</th>
                       </tr>
                     </thead>
@@ -477,6 +554,7 @@ const Construction = () => {
                           <td className="p-2">{format(new Date(execution.date), 'dd/MM/yyyy')}</td>
                           <td className="p-2">{execution.activityName}</td>
                           <td className="p-2">{execution.executedQuantity}</td>
+                          <td className="p-2">{execution.issueCategory || 'N/A'}</td>
                           <td className="p-2 max-w-xs truncate">{execution.notes}</td>
                         </tr>
                       ))}

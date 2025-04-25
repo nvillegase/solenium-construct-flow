@@ -6,6 +6,7 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { mockProjects } from "@/lib/mock-data";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -17,12 +18,17 @@ const AppLayout = ({ children, requiredRoles }: AppLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
+  // Get available projects for current user
+  const availableProjects = mockProjects.filter(project => 
+    user?.projectIds?.includes(project.id) || user?.role === "Supervisor"
+  );
+
   // Initialize selected project from user's first project (if available)
   useEffect(() => {
-    if (user?.projectIds && user.projectIds.length > 0 && !selectedProjectId) {
-      setSelectedProjectId(user.projectIds[0]);
+    if (availableProjects.length > 0 && !selectedProjectId) {
+      setSelectedProjectId(availableProjects[0].id);
     }
-  }, [user, selectedProjectId]);
+  }, [user, availableProjects, selectedProjectId]);
 
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
@@ -35,8 +41,8 @@ const AppLayout = ({ children, requiredRoles }: AppLayoutProps) => {
   }
 
   // Check if the user has access to multiple projects and needs project selector
-  const showProjectSelector = user?.projectIds && user.projectIds.length > 0 && 
-    (hasRole('Diseñador') || hasRole('Residente') || hasRole('Supervisor'));
+  const showProjectSelector = availableProjects.length > 0 &&
+    ["Diseñador", "Residente", "Supervisor"].includes(user?.role || "");
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -63,9 +69,9 @@ const AppLayout = ({ children, requiredRoles }: AppLayoutProps) => {
                       <SelectValue placeholder="Seleccionar proyecto" />
                     </SelectTrigger>
                     <SelectContent>
-                      {user?.projectIds.map((projectId) => (
-                        <SelectItem key={projectId} value={projectId}>
-                          Proyecto {projectId}
+                      {availableProjects.map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

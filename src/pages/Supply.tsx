@@ -1,22 +1,20 @@
 
 import { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { mockPurchaseOrders, mockMaterials } from "@/lib/mock-data";
+import { mockPurchaseOrders, mockProjects } from "@/lib/mock-data";
 import { PurchaseOrder } from "@/lib/types";
-import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Supply = () => {
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(mockPurchaseOrders);
-  const { toast } = useToast();
+  const [selectedProjectId, setSelectedProjectId] = useState<string | "all">("all");
+  const { user } = useAuth();
   
   // Get badge color based on order status
   const getStatusBadgeColor = (status: string) => {
@@ -29,13 +27,57 @@ const Supply = () => {
     }
   };
   
+  // Filter orders by selected project
+  const filterOrdersByProject = (orders: PurchaseOrder[], projectId: string | "all") => {
+    if (projectId === "all") return orders;
+    
+    // Check if any material in the order belongs to the selected project
+    return orders.filter(order => {
+      // Main project check
+      if (order.projectId === projectId) return true;
+      
+      // Check individual materials if they have projectId
+      const hasMaterialForProject = order.materials.some(mat => 
+        'projectId' in mat && mat.projectId === projectId
+      );
+      
+      return hasMaterialForProject;
+    });
+  };
+  
+  const filteredOrders = filterOrdersByProject(purchaseOrders, selectedProjectId);
+  
   return (
-    <AppLayout requiredRoles={["Suministro", "Supervisor"]}>
+    <AppLayout requiredRoles={["Suministro", "Supervisor", "Residente"]}>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h1 className="text-2xl font-semibold">Suministro de Materiales</h1>
-          <div className="text-sm text-gray-500">
-            Las órdenes de compra se importan automáticamente de sistemas externos
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            <div className="text-sm text-gray-500">
+              Las órdenes de compra se importan automáticamente de sistemas externos
+            </div>
+            
+            {/* Project filter */}
+            <div className="w-full sm:w-auto min-w-[220px]">
+              <Select
+                value={selectedProjectId}
+                onValueChange={(value) => setSelectedProjectId(value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Filtrar por proyecto" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los proyectos</SelectItem>
+                  {mockProjects.filter(project => 
+                    user?.projectIds?.includes(project.id) || user?.role === "Supervisor"
+                  ).map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
         
@@ -57,17 +99,17 @@ const Supply = () => {
               complete: (po: PurchaseOrder) => po.status === "Recibido Total",
             };
             
-            const filteredOrders = purchaseOrders.filter(statusFilter[tabValue as keyof typeof statusFilter]);
+            const ordersForTab = filteredOrders.filter(statusFilter[tabValue as keyof typeof statusFilter]);
             
             return (
               <TabsContent key={tabValue} value={tabValue}>
-                {filteredOrders.length === 0 ? (
+                {ordersForTab.length === 0 ? (
                   <div className="text-center py-10">
                     <p className="text-gray-500">No hay órdenes de compra en esta categoría</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {filteredOrders.map(order => (
+                    {ordersForTab.map(order => (
                       <Card key={order.id} className="material-card">
                         <CardHeader className="pb-2">
                           <div className="flex justify-between items-start">
@@ -76,7 +118,7 @@ const Supply = () => {
                                 {order.supplier}
                               </CardTitle>
                               <CardDescription>
-                                Orden #{order.id.substring(3, 8)} • Creada el {format(new Date(order.createdAt), 'dd/MM/yyyy')}
+                                Orden #{order.id.substring(0, 5)} • Creada el {format(new Date(order.createdAt), 'dd/MM/yyyy')}
                               </CardDescription>
                             </div>
                             <Badge className={getStatusBadgeColor(order.status)}>
@@ -97,7 +139,7 @@ const Supply = () => {
                               </div>
                             )}
                             <div className="flex justify-between text-sm">
-                              <span className="text-gray-500">Proyecto:</span>
+                              <span className="text-gray-500">Proyecto principal:</span>
                               <span className="font-medium">{order.projectName || "No especificado"}</span>
                             </div>
                           </div>
@@ -109,7 +151,14 @@ const Supply = () => {
                             <ul className="space-y-1 text-sm">
                               {order.materials.map(material => (
                                 <li key={material.id} className="flex justify-between">
-                                  <span>{material.materialName}</span>
+                                  <div className="flex-1">
+                                    <span>{material.materialName}</span>
+                                    {'projectId' in material && material.projectId !== order.projectId && (
+                                      <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                                        {mockProjects.find(p => p.id === material.projectId)?.name || 'Otro proyecto'}
+                                      </span>
+                                    )}
+                                  </div>
                                   <span className="font-medium">{material.quantity} unidades</span>
                                 </li>
                               ))}

@@ -1,35 +1,69 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Save, Trash, Link } from "lucide-react";
-import { mockWorkQuantities as initialWorkQuantities, mockMaterials as initialMaterials } from "@/lib/mock-data";
-import { WorkQuantity, Material } from "@/lib/types";
+import { Plus, Save, Trash, Link, AlertTriangle } from "lucide-react";
+import { mockWorkQuantities as initialWorkQuantities, mockMaterials as initialMaterials, mockProjects } from "@/lib/mock-data";
+import { WorkQuantity, Material, Project } from "@/lib/types";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Design = () => {
-  const [workQuantities, setWorkQuantities] = useState<WorkQuantity[]>(initialWorkQuantities);
-  const [materials, setMaterials] = useState<Material[]>(initialMaterials);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [workQuantities, setWorkQuantities] = useState<WorkQuantity[]>([]);
+  const [materials, setMaterials] = useState<Material[]>([]);
   const [editingQuantity, setEditingQuantity] = useState<string | null>(null);
   const [editingMaterial, setEditingMaterial] = useState<string | null>(null);
+  const [selectedTabKey, setSelectedTabKey] = useState<string>("quantities");
   const { toast } = useToast();
-  const { hasRole } = useAuth();
+  const { hasRole, user } = useAuth();
   const isSupervisor = hasRole("Supervisor");
   
-  // State for material-activity relations
+  // States for material-activity relations
   const [selectedQuantityForMaterials, setSelectedQuantityForMaterials] = useState<string | null>(null);
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   
+  // Get available projects for current user
+  const availableProjects = mockProjects.filter(project => 
+    user?.projectIds?.includes(project.id) || user?.role === "Supervisor"
+  );
+  
+  // Filter work quantities and materials by selected project
+  useEffect(() => {
+    if (selectedProjectId) {
+      setWorkQuantities(initialWorkQuantities.filter(item => item.projectId === selectedProjectId));
+      setMaterials(initialMaterials.filter(item => item.projectId === selectedProjectId));
+    } else {
+      setWorkQuantities([]);
+      setMaterials([]);
+    }
+    // Reset editing states
+    setEditingQuantity(null);
+    setEditingMaterial(null);
+    setSelectedQuantityForMaterials(null);
+    setSelectedMaterials([]);
+  }, [selectedProjectId]);
+  
   // Add a new work quantity
   const addWorkQuantity = () => {
+    if (!selectedProjectId) {
+      toast({
+        title: "Error",
+        description: "Debe seleccionar un proyecto primero",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const newItem: WorkQuantity = {
       id: `wq-${Date.now()}`,
-      projectId: "project-1", // Default project ID
+      projectId: selectedProjectId,
       description: "Nueva actividad",
       unit: "unidad",
       quantity: 0
@@ -58,9 +92,18 @@ const Design = () => {
   
   // Add a new material
   const addMaterial = () => {
+    if (!selectedProjectId) {
+      toast({
+        title: "Error",
+        description: "Debe seleccionar un proyecto primero",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const newItem: Material = {
       id: `mat-${Date.now()}`,
-      projectId: "project-1", // Default project ID
+      projectId: selectedProjectId,
       name: "Nuevo material",
       unit: "unidad",
       estimatedQuantity: 0,
@@ -143,12 +186,121 @@ const Design = () => {
     setSelectedMaterials([]);
   };
   
+  // Remove material from work quantity
+  const removeMaterialFromWorkQuantity = (workQuantityId: string, materialId: string) => {
+    setWorkQuantities(
+      workQuantities.map(item => {
+        if (item.id === workQuantityId && item.materialIds) {
+          return { 
+            ...item, 
+            materialIds: item.materialIds.filter(id => id !== materialId)
+          };
+        }
+        return item;
+      })
+    );
+    
+    toast({
+      title: "Material desasociado",
+      description: "Se ha eliminado la asociación de material correctamente"
+    });
+  };
+  
+  // Get unrelated materials
+  const getUnrelatedMaterials = () => {
+    const allMaterialsWithRelations = workQuantities
+      .flatMap(wq => wq.materialIds || [])
+      .filter((value, index, self) => self.indexOf(value) === index);
+    
+    return materials.filter(mat => !allMaterialsWithRelations.includes(mat.id));
+  };
+  
+  // Get work quantities without materials
+  const getWorkQuantitiesWithoutMaterials = () => {
+    return workQuantities.filter(wq => !wq.materialIds || wq.materialIds.length === 0);
+  };
+  
+  // Render project selection or tabs based on selection state
+  if (!selectedProjectId) {
+    return (
+      <AppLayout requiredRoles={["Diseñador", "Supervisor"]}>
+        <div className="space-y-6">
+          <h1 className="text-2xl font-semibold">Diseño del Proyecto</h1>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Selecciona un Proyecto</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4 text-gray-600">Para acceder a las funcionalidades de diseño, primero debes seleccionar un proyecto:</p>
+              
+              <div className="space-y-4">
+                {availableProjects.map(project => (
+                  <div 
+                    key={project.id}
+                    className="p-4 border rounded-md hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-colors flex justify-between items-center"
+                    onClick={() => setSelectedProjectId(project.id)}
+                  >
+                    <div>
+                      <h3 className="font-medium text-lg">{project.name}</h3>
+                      <p className="text-gray-600 text-sm">
+                        {project.location} • {project.status}
+                      </p>
+                    </div>
+                    <Badge variant={project.status === 'En Ejecución' ? 'default' : 'secondary'}>
+                      {project.progress}% completado
+                    </Badge>
+                  </div>
+                ))}
+                
+                {availableProjects.length === 0 && (
+                  <div className="text-center p-6 border border-dashed rounded-md">
+                    <p className="text-gray-500">No hay proyectos asignados a tu perfil.</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AppLayout>
+    );
+  }
+  
+  // Get current project details
+  const currentProject = mockProjects.find(p => p.id === selectedProjectId);
+  
   return (
     <AppLayout requiredRoles={["Diseñador", "Supervisor"]}>
       <div className="space-y-6">
-        <h1 className="text-2xl font-semibold">Diseño del Proyecto</h1>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h1 className="text-2xl font-semibold">Diseño del Proyecto</h1>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Proyecto actual:</span>
+            <Select
+              value={selectedProjectId}
+              onValueChange={setSelectedProjectId}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Seleccionar proyecto" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableProjects.map(project => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         
-        <Tabs defaultValue="quantities" className="w-full">
+        <Tabs 
+          defaultValue={selectedTabKey} 
+          value={selectedTabKey}
+          onValueChange={setSelectedTabKey}
+          className="w-full"
+        >
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="quantities">Cantidades de Obra</TabsTrigger>
             <TabsTrigger value="materials">Materiales</TabsTrigger>
@@ -254,6 +406,12 @@ const Design = () => {
                       ))}
                     </tbody>
                   </table>
+                  
+                  {workQuantities.length === 0 && (
+                    <div className="text-center py-6 text-gray-500">
+                      No hay cantidades de obra definidas para este proyecto
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -342,6 +500,12 @@ const Design = () => {
                       ))}
                     </tbody>
                   </table>
+                  
+                  {materials.length === 0 && (
+                    <div className="text-center py-6 text-gray-500">
+                      No hay materiales definidos para este proyecto
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -393,7 +557,17 @@ const Design = () => {
                                     {selected.materialIds.map(matId => {
                                       const mat = materials.find(m => m.id === matId);
                                       return (
-                                        <li key={matId}>{mat ? mat.name : 'Material desconocido'}</li>
+                                        <li key={matId} className="flex items-center justify-between">
+                                          <span>{mat ? mat.name : 'Material desconocido'}</span>
+                                          <Button
+                                            variant="ghost" 
+                                            size="icon"
+                                            onClick={() => removeMaterialFromWorkQuantity(selected.id, matId)}
+                                            className="h-6 w-6 text-red-500"
+                                          >
+                                            <Trash size={14} />
+                                          </Button>
+                                        </li>
                                       );
                                     })}
                                   </ul>
@@ -429,15 +603,86 @@ const Design = () => {
                           </label>
                         </div>
                       ))}
+                      
+                      {materials.length === 0 && (
+                        <div className="p-3 text-gray-500 text-center">
+                          No hay materiales disponibles
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
                 
                 <div className="flex justify-end">
-                  <Button onClick={associateMaterials} className="bg-solenium-blue hover:bg-blue-600">
+                  <Button 
+                    onClick={associateMaterials} 
+                    className="bg-solenium-blue hover:bg-blue-600"
+                    disabled={!selectedQuantityForMaterials || selectedMaterials.length === 0}
+                  >
                     <Link size={16} className="mr-2" />
                     Asociar Materiales
                   </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                  {/* Actividades sin materiales */}
+                  <div>
+                    <h3 className="font-medium mb-2 flex items-center gap-1">
+                      <AlertTriangle size={16} className="text-amber-500" />
+                      Actividades sin materiales
+                    </h3>
+                    <div className="border rounded-md p-3 max-h-[250px] overflow-y-auto">
+                      {getWorkQuantitiesWithoutMaterials().length > 0 ? (
+                        <ul className="space-y-1">
+                          {getWorkQuantitiesWithoutMaterials().map(wq => (
+                            <li key={wq.id} className="py-1 border-b last:border-0">
+                              <span className="font-medium">{wq.description}</span>
+                              <div className="flex items-center text-xs text-gray-500 gap-2">
+                                <span>{wq.quantity} {wq.unit}</span>
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  className="p-0 h-auto text-blue-500"
+                                  onClick={() => {
+                                    setSelectedQuantityForMaterials(wq.id);
+                                    setSelectedTabKey("relations");
+                                  }}
+                                >
+                                  Asociar materiales
+                                </Button>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-gray-500 text-center">Todas las actividades tienen materiales asociados</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Materiales sin actividades */}
+                  <div>
+                    <h3 className="font-medium mb-2 flex items-center gap-1">
+                      <AlertTriangle size={16} className="text-amber-500" />
+                      Materiales sin actividades
+                    </h3>
+                    <div className="border rounded-md p-3 max-h-[250px] overflow-y-auto">
+                      {getUnrelatedMaterials().length > 0 ? (
+                        <ul className="space-y-1">
+                          {getUnrelatedMaterials().map(mat => (
+                            <li key={mat.id} className="py-1 border-b last:border-0">
+                              <span className="font-medium">{mat.name}</span>
+                              <div className="text-xs text-gray-500">
+                                {mat.estimatedQuantity} {mat.unit}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="text-gray-500 text-center">Todos los materiales están asociados a actividades</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

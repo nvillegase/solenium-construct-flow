@@ -3,11 +3,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 
 // Pages
-import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Design from "./pages/Design";
 import Supply from "./pages/Supply";
@@ -28,7 +27,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<Navigate to="/diseno" replace />} />
             <Route path="/diseno" element={<Design />} />
             <Route path="/suministro" element={<Supply />} />
             <Route path="/inventario" element={<Inventory />} />

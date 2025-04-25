@@ -1,3 +1,4 @@
+
 export type UserRole = 'Diseñador' | 'Suministro' | 'Almacenista' | 'Residente' | 'Supervisor';
 
 export interface User {
@@ -131,4 +132,5 @@ export type IssueCategory =
   | 'Falta de especificaciones técnicas en los diseños'
   | 'RTB incompleto'
   | 'Daño de maquinaria o herramienta'
+  | 'Sin novedad'
   | 'Otros';

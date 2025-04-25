@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -89,9 +88,11 @@ const Inventory = () => {
     // Create new reception record
     const selectedMaterial = mockMaterials.find(m => m.id === newReception.materialId);
     const materialName = selectedMaterial?.name || "Material desconocido";
+    const projectId = selectedMaterial?.projectId || "project-1"; // Get project ID from material or default
     
     const newReceptionRecord: MaterialReception = {
       id: `rec-${Date.now()}`,
+      projectId: projectId, // Add projectId here
       orderId: newReception.orderId,
       materialId: newReception.materialId,
       materialName,
@@ -175,6 +176,7 @@ const Inventory = () => {
     // Create new delivery record
     const newDeliveryRecord: MaterialDelivery = {
       id: `del-${Date.now()}`,
+      projectId: selectedMaterial.projectId, // Add projectId here
       materialId: newDelivery.materialId,
       materialName: selectedMaterial.name,
       receivedBy: newDelivery.receivedBy,

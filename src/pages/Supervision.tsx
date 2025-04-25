@@ -9,7 +9,7 @@ import {
 import { format, differenceInDays, parseISO } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { IssueCategory } from "@/lib/types";
+import { Activity, IssueCategory } from "@/lib/types";
 
 const COLORS = [
   "#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", 
@@ -314,10 +314,10 @@ const Supervision = () => {
                             <Bar dataKey="usado" name="Usado" fill="#FF9800" />
                             <Bar dataKey="enSitio" name="En Sitio" fill="#4CAF50" />
                           </BarChart>
-                    </ResponsiveContainer>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
                 </CardContent>
               </Card>
             </div>

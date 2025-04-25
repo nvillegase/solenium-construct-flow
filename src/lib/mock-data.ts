@@ -132,6 +132,24 @@ export const mockWorkQuantities: WorkQuantity[] = [
     expectedExecutionDate: '2024-07-01',
     materialIds: ['mat-9', 'mat-10']
   },
+  {
+    id: 'wq-6',
+    projectId: 'project-1',
+    description: 'Montaje de estructura metálica',
+    unit: 'kg',
+    quantity: 5000,
+    expectedExecutionDate: '2024-05-20',
+    materialIds: ['mat-11', 'mat-12']
+  },
+  {
+    id: 'wq-7',
+    projectId: 'project-2',
+    description: 'Construcción de cerramientos',
+    unit: 'm2',
+    quantity: 800,
+    expectedExecutionDate: '2024-06-10',
+    materialIds: ['mat-13', 'mat-14']
+  }
 ];
 
 export const mockMaterials: Material[] = [
@@ -225,11 +243,48 @@ export const mockMaterials: Material[] = [
     receivedQuantity: 10,
     usedQuantity: 8
   },
+  {
+    id: 'mat-11',
+    projectId: 'project-1',
+    name: 'Perfiles metálicos IPE 200',
+    unit: 'kg',
+    estimatedQuantity: 2500,
+    receivedQuantity: 2000,
+    usedQuantity: 1800
+  },
+  {
+    id: 'mat-12',
+    projectId: 'project-1',
+    name: 'Pernos de anclaje',
+    unit: 'und',
+    estimatedQuantity: 500,
+    receivedQuantity: 500,
+    usedQuantity: 450
+  },
+  {
+    id: 'mat-13',
+    projectId: 'project-2',
+    name: 'Lámina metálica',
+    unit: 'm2',
+    estimatedQuantity: 1000,
+    receivedQuantity: 800,
+    usedQuantity: 600
+  },
+  {
+    id: 'mat-14',
+    projectId: 'project-2',
+    name: 'Pintura anticorrosiva',
+    unit: 'galón',
+    estimatedQuantity: 50,
+    receivedQuantity: 40,
+    usedQuantity: 35
+  }
 ];
 
 export const mockPurchaseOrders: PurchaseOrder[] = [
   {
     id: 'order-1',
+    projectId: 'project-1',
     materials: [
       { id: 'item-1', materialId: 'mat-1', materialName: 'Panel Solar 450W', quantity: 100, projectId: 'project-1' },
       { id: 'item-2', materialId: 'mat-2', materialName: 'Inversor 60kW', quantity: 2, projectId: 'project-2' }
@@ -241,6 +296,7 @@ export const mockPurchaseOrders: PurchaseOrder[] = [
   },
   {
     id: 'order-2',
+    projectId: 'project-2',
     materials: [
       { id: 'item-3', materialId: 'mat-3', materialName: 'Cable de cobre #10', quantity: 500, projectId: 'project-3' },
       { id: 'item-4', materialId: 'mat-4', materialName: 'Interruptor termomagnético 20A', quantity: 100, projectId: 'project-4' }
@@ -252,6 +308,7 @@ export const mockPurchaseOrders: PurchaseOrder[] = [
   },
   {
     id: 'order-3',
+    projectId: 'project-3',
     materials: [
       { id: 'item-5', materialId: 'mat-5', materialName: 'Tubería PVC 1/2"', quantity: 300, projectId: 'project-1' },
       { id: 'item-6', materialId: 'mat-6', materialName: 'Caja de registro 4x4', quantity: 150, projectId: 'project-2' }
@@ -261,7 +318,7 @@ export const mockPurchaseOrders: PurchaseOrder[] = [
     actualDeliveryDate: '2024-05-23',
     status: 'Recibido Total',
     createdAt: '2024-04-10',
-  },
+  }
 ];
 
 export const mockMaterialReceptions: MaterialReception[] = [
@@ -401,6 +458,34 @@ export const mockActivities: Activity[] = [
     progress: 80,
     materialsRequired: ['mat-9', 'mat-10']
   },
+  {
+    id: 'act-6',
+    projectId: 'project-1',
+    workQuantityId: 'wq-6',
+    name: 'Montaje de estructura metálica',
+    contractor: 'Construyendo SAS',
+    estimatedQuantity: 5000,
+    executedQuantity: 3500,
+    unit: 'kg',
+    date: '2024-05-20',
+    expectedExecutionDate: '2024-05-25',
+    progress: 70,
+    materialsRequired: ['mat-11', 'mat-12']
+  },
+  {
+    id: 'act-7',
+    projectId: 'project-2',
+    workQuantityId: 'wq-7',
+    name: 'Construcción de cerramientos',
+    contractor: 'OSPINAS',
+    estimatedQuantity: 800,
+    executedQuantity: 500,
+    unit: 'm2',
+    date: '2024-05-21',
+    expectedExecutionDate: '2024-06-10',
+    progress: 62.5,
+    materialsRequired: ['mat-13', 'mat-14']
+  }
 ];
 
 export const mockDailyExecutions: DailyExecution[] = [
@@ -455,6 +540,26 @@ export const mockDailyExecutions: DailyExecution[] = [
     notes: 'Se instalaron los paneles en el techo',
     issueCategory: 'Sin novedad'
   },
+  {
+    id: 'exec-6',
+    projectId: 'project-1',
+    activityId: 'act-6',
+    activityName: 'Montaje de estructura metálica',
+    executedQuantity: 500,
+    date: '2024-05-20',
+    notes: 'Se completó el montaje del primer nivel',
+    issueCategory: 'Lluvia moderada'
+  },
+  {
+    id: 'exec-7',
+    projectId: 'project-2',
+    activityId: 'act-7',
+    activityName: 'Construcción de cerramientos',
+    executedQuantity: 100,
+    date: '2024-05-21',
+    notes: 'Retraso por falta de material',
+    issueCategory: 'Falta de suministro'
+  }
 ];
 
 export const mockDailyProjections: DailyProjection[] = [

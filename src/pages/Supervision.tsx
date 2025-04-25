@@ -75,7 +75,6 @@ const Supervision = () => {
     
     return projectMaterials.map(material => ({
       name: material.name.length > 20 ? material.name.substring(0, 20) + '...' : material.name,
-      estimado: material.estimatedQuantity,
       recibido: material.receivedQuantity,
       usado: material.usedQuantity,
       enSitio: material.receivedQuantity - material.usedQuantity
@@ -93,8 +92,7 @@ const Supervision = () => {
     if (!activity.expectedExecutionDate) return 0;
     const today = new Date();
     const expectedDate = new Date(activity.expectedExecutionDate);
-    const delay = differenceInDays(today, expectedDate);
-    return delay > 0 ? delay : 0;
+    return Math.max(0, differenceInDays(today, expectedDate));
   };
 
   const getMaterialsAvailability = (activity: Activity) => {
@@ -278,11 +276,11 @@ const Supervision = () => {
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis type="number" />
                             <YAxis type="category" dataKey="name" width={100} />
-                            <Tooltip />
+                            <Tooltip formatter={(value) => `${value}%`} />
                             <Bar 
                               dataKey="porcentaje" 
-                              fill="#4CAF50" 
-                              name="% Avance"
+                              name="% Avance" 
+                              fill="#4CAF50"
                             >
                               {getActivitiesProgressData(currentProject).map((entry, index) => (
                                 <Cell 
@@ -295,40 +293,31 @@ const Supervision = () => {
                         </ResponsiveContainer>
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <h3 className="text-lg font-medium">Disponibilidad de Materiales</h3>
                       <p className="text-sm text-gray-500 mb-2">
-                        Porcentaje de materiales disponibles por actividad
+                        Distribución de materiales por estado
                       </p>
                       <div className="h-80">
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart 
-                            data={mockActivities
-                              .filter(act => act.projectId === currentProject?.id)
-                              .map(activity => ({
-                                name: activity.name.length > 20 
-                                  ? activity.name.substring(0, 20) + '...' 
-                                  : activity.name,
-                                disponibilidad: getMaterialsAvailability(activity)
-                              }))}
-                            layout="vertical"
+                          <BarChart
+                            data={getMaterialsData(currentProject)}
                             margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                           >
                             <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis type="number" />
-                            <YAxis type="category" dataKey="name" width={100} />
+                            <XAxis dataKey="name" />
+                            <YAxis />
                             <Tooltip />
-                            <Bar 
-                              dataKey="disponibilidad" 
-                              fill="#2196F3" 
-                              name="% Materiales Disponibles" 
-                            />
+                            <Legend />
+                            <Bar dataKey="recibido" name="Recibido" fill="#2196F3" />
+                            <Bar dataKey="usado" name="Usado" fill="#FF9800" />
+                            <Bar dataKey="enSitio" name="En Sitio" fill="#4CAF50" />
                           </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
+                    </ResponsiveContainer>
                   </div>
+                </div>
+              </div>
                 </CardContent>
               </Card>
             </div>

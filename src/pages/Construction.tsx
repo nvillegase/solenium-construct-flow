@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -13,9 +12,21 @@ import { Activity, DailyExecution, IssueCategory, DailyProjection } from "@/lib/
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info, Plus, Save, Trash2 } from "lucide-react";
+import { Info, Plus, Save, Trash2, Edit2 } from "lucide-react";
 
 const CONTRACTORS = ["CONSTRUYENDO", "ELECTROMONTES", "OSPINAS", "ELÉCTRICOS DEL CESAR"];
+const ISSUE_CATEGORIES: IssueCategory[] = [
+  'Lluvia moderada',
+  'Tormenta',
+  'Falta de suministro',
+  'Vandalismo',
+  'Delincuencia organizada',
+  'Paros o manifestaciones en las vías',
+  'Falta de especificaciones técnicas en los diseños',
+  'RTB incompleto',
+  'Daño de maquinaria o herramienta',
+  'Otros'
+];
 
 const Construction = () => {
   // State for daily projection
@@ -31,6 +42,15 @@ const Construction = () => {
   // State for execution
   const [selectedExecutionDate, setSelectedExecutionDate] = useState<string | null>(null);
   const [executions, setExecutions] = useState<DailyExecution[]>(mockDailyExecutions);
+  const [editingProjection, setEditingProjection] = useState<string | null>(null);
+  const [executionData, setExecutionData] = useState<{
+    [key: string]: {
+      quantity: number;
+      notes: string;
+      issueCategory?: IssueCategory;
+      issueNotes?: string;
+    };
+  }>({});
   const { toast } = useToast();
 
   // Handle adding a new activity to the daily projection
@@ -90,6 +110,34 @@ const Construction = () => {
   // Get all dates with projections
   const getDatesWithProjections = () => {
     return [...new Set(mockDailyProjections.map(p => p.date))].sort();
+  };
+
+  const handleUpdateProjection = (projectionId: string, activities: DailyProjection['activities']) => {
+    // In a real app, this would be an API call
+    toast({
+      title: "Éxito",
+      description: "Programación actualizada correctamente"
+    });
+    setEditingProjection(null);
+  };
+
+  const handleExecutionSubmit = (date: string) => {
+    if (Object.keys(executionData).length === 0) {
+      toast({
+        title: "Error",
+        description: "Debe ingresar al menos un registro de ejecución",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // In a real app, this would be an API call
+    toast({
+      title: "Éxito",
+      description: "Reporte de ejecución guardado correctamente"
+    });
+
+    setExecutionData({});
   };
 
   return (
@@ -248,32 +296,99 @@ const Construction = () => {
                 <div className="space-y-4">
                   {getDatesWithProjections().map(date => {
                     const projection = getProjectionsForDate(date);
+                    const isEditing = editingProjection === projection?.id;
+
                     return (
                       <div key={date} className="border rounded-md p-4">
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="font-medium">
                             {format(new Date(date), 'dd/MM/yyyy')}
                           </h3>
-                          {!projection?.isExecutionComplete && (
-                            <Alert className="bg-yellow-50 text-yellow-800 p-2">
-                              <Info className="w-4 h-4" />
-                              <AlertDescription>
-                                Pendiente reporte de ejecución
-                              </AlertDescription>
-                            </Alert>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {!projection?.isExecutionComplete && (
+                              <Alert className="bg-yellow-50 text-yellow-800 p-2">
+                                <Info className="w-4 h-4" />
+                                <AlertDescription>
+                                  Pendiente reporte de ejecución
+                                </AlertDescription>
+                              </Alert>
+                            )}
+                            {!isEditing ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setEditingProjection(projection?.id)}
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                onClick={() => handleUpdateProjection(projection?.id, projection?.activities)}
+                              >
+                                <Save className="w-4 h-4 mr-2" />
+                                Guardar
+                              </Button>
+                            )}
+                          </div>
                         </div>
                         <div className="space-y-2">
                           {projection?.activities.map((activity, index) => {
                             const activityDetails = mockActivities.find(a => a.id === activity.activityId);
                             return (
                               <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                                <span>
+                                <div className="flex-1 grid grid-cols-3 gap-4">
                                   <span className="font-medium">{activityDetails?.name}</span>
-                                  <span className="text-gray-500 ml-2">
-                                    ({activity.quantity} {activity.unit} - {activity.contractor})
-                                  </span>
-                                </span>
+                                  {isEditing ? (
+                                    <>
+                                      <Select
+                                        value={activity.contractor}
+                                        onValueChange={(value) => {
+                                          const newActivities = [...projection.activities];
+                                          newActivities[index].contractor = value;
+                                          // Update projection activities
+                                        }}
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {CONTRACTORS.map(c => (
+                                            <SelectItem key={c} value={c}>
+                                              {c}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <Input
+                                        type="number"
+                                        value={activity.quantity}
+                                        onChange={(e) => {
+                                          const newActivities = [...projection.activities];
+                                          newActivities[index].quantity = Number(e.target.value);
+                                          // Update projection activities
+                                        }}
+                                      />
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span>{activity.contractor}</span>
+                                      <span>{activity.quantity} {activity.unit}</span>
+                                    </>
+                                  )}
+                                </div>
+                                {isEditing && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      const newActivities = projection.activities.filter((_, i) => i !== index);
+                                      // Update projection activities
+                                    }}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                )}
                               </div>
                             );
                           })}
@@ -294,7 +409,6 @@ const Construction = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {/* Date selector for execution */}
                   <div className="space-y-2">
                     <Label>Fecha de Ejecución</Label>
                     <Select
@@ -318,12 +432,18 @@ const Construction = () => {
                     </Select>
                   </div>
 
-                  {/* Show activities for selected date */}
                   {selectedExecutionDate && (
                     <div className="space-y-4">
                       <h3 className="font-medium">Actividades Programadas:</h3>
                       {getProjectionsForDate(selectedExecutionDate)?.activities.map((activity, index) => {
                         const activityDetails = mockActivities.find(a => a.id === activity.activityId);
+                        const executionDetails = executionData[activity.activityId] || {
+                          quantity: 0,
+                          notes: '',
+                          issueCategory: undefined,
+                          issueNotes: ''
+                        };
+
                         return (
                           <Card key={index}>
                             <CardContent className="pt-6">
@@ -340,12 +460,81 @@ const Construction = () => {
                                 <div className="space-y-4">
                                   <div>
                                     <Label>Cantidad Ejecutada</Label>
-                                    <Input type="number" min="0" />
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      value={executionDetails.quantity}
+                                      onChange={(e) => {
+                                        setExecutionData({
+                                          ...executionData,
+                                          [activity.activityId]: {
+                                            ...executionDetails,
+                                            quantity: Number(e.target.value)
+                                          }
+                                        });
+                                      }}
+                                    />
                                   </div>
                                   <div>
                                     <Label>Observaciones</Label>
-                                    <Textarea rows={2} />
+                                    <Textarea
+                                      rows={2}
+                                      value={executionDetails.notes}
+                                      onChange={(e) => {
+                                        setExecutionData({
+                                          ...executionData,
+                                          [activity.activityId]: {
+                                            ...executionDetails,
+                                            notes: e.target.value
+                                          }
+                                        });
+                                      }}
+                                    />
                                   </div>
+                                  <div>
+                                    <Label>Categoría de Novedad</Label>
+                                    <Select
+                                      value={executionDetails.issueCategory}
+                                      onValueChange={(value: IssueCategory) => {
+                                        setExecutionData({
+                                          ...executionData,
+                                          [activity.activityId]: {
+                                            ...executionDetails,
+                                            issueCategory: value
+                                          }
+                                        });
+                                      }}
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Seleccionar categoría" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {ISSUE_CATEGORIES.map(category => (
+                                          <SelectItem key={category} value={category}>
+                                            {category}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  {executionDetails.issueCategory === 'Otros' && (
+                                    <div>
+                                      <Label>Descripción de la Novedad</Label>
+                                      <Input
+                                        type="text"
+                                        value={executionDetails.issueNotes}
+                                        onChange={(e) => {
+                                          setExecutionData({
+                                            ...executionData,
+                                            [activity.activityId]: {
+                                              ...executionDetails,
+                                              issueNotes: e.target.value
+                                            }
+                                          });
+                                        }}
+                                      />
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </CardContent>
@@ -353,7 +542,7 @@ const Construction = () => {
                         );
                       })}
                       <div className="flex justify-end">
-                        <Button>
+                        <Button onClick={() => handleExecutionSubmit(selectedExecutionDate)}>
                           Guardar Reporte de Ejecución
                         </Button>
                       </div>

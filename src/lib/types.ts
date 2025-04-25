@@ -1,4 +1,3 @@
-
 export type UserRole = 'Diseñador' | 'Suministro' | 'Almacenista' | 'Residente' | 'Supervisor';
 
 export interface User {
@@ -18,6 +17,7 @@ export interface Project {
   expectedEndDate: string;
   status: 'Planificación' | 'En Ejecución' | 'Pausado' | 'Completado' | 'Cancelado';
   progress: number;
+  projectedProgress: number; // Added this field
 }
 
 export interface WorkQuantity {
@@ -49,6 +49,7 @@ export interface PurchaseOrder {
     materialId: string;
     materialName: string;
     quantity: number;
+    projectId: string; // Added this field
   }[];
   supplier: string;
   estimatedDeliveryDate: string;
@@ -105,6 +106,19 @@ export interface DailyExecution {
   notes?: string;
   issueCategory?: IssueCategory; // New field for issue categorization
   issueOtherDescription?: string; // For "Other" category description
+}
+
+export interface DailyProjection {
+  id: string;
+  projectId: string;
+  date: string;
+  activities: {
+    activityId: string;
+    contractor: string;
+    quantity: number;
+    unit: string;
+  }[];
+  isExecutionComplete: boolean;
 }
 
 export type IssueCategory = 

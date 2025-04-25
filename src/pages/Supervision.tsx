@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { IssueCategory } from "@/lib/types";
 
-// Colors for charts
 const COLORS = [
   "#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", 
   "#82CA9D", "#FFC658", "#FF6B6B", "#6A7FDB", "#61DAFB"
@@ -21,7 +19,6 @@ const COLORS = [
 const Supervision = () => {
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   
-  // Prepare projects progress data for comparison
   const projectsProgressData = mockProjects.map(project => ({
     name: project.name,
     real: project.progress,
@@ -29,7 +26,6 @@ const Supervision = () => {
     desviacion: project.progress - (project.projectedProgress || project.progress + 10)
   }));
   
-  // Create time-series data for projects progress (simulated data)
   const timeSeriesData = [
     { date: '01/01', p1Real: 10, p1Proyectado: 15, p2Real: 5, p2Proyectado: 10, p3Real: 20, p3Proyectado: 18, p4Real: 30, p4Proyectado: 28 },
     { date: '01/15', p1Real: 20, p1Proyectado: 30, p2Real: 15, p2Proyectado: 20, p3Real: 35, p3Proyectado: 32, p4Real: 40, p4Proyectado: 42 },
@@ -39,18 +35,15 @@ const Supervision = () => {
     { date: '03/15', p1Real: 65, p1Proyectado: 75, p2Real: 40, p2Proyectado: 50, p3Real: 85, p3Proyectado: 88, p4Real: 85, p4Proyectado: 88 },
   ];
   
-  // Get the current project details if one is selected
   const currentProject = selectedProject 
     ? mockProjects.find(p => p.id === selectedProject)
     : null;
 
-  // Process issue categories data for all projects
   const processIssueCategoriesData = (projectId?: string) => {
     const filteredExecutions = projectId 
       ? mockDailyExecutions.filter(item => item.projectId === projectId && item.issueCategory)
       : mockDailyExecutions.filter(item => item.issueCategory);
     
-    // Count occurrences of each issue category
     const categoryCounts: Record<string, number> = {};
     
     filteredExecutions.forEach(execution => {
@@ -59,16 +52,13 @@ const Supervision = () => {
       }
     });
     
-    // Convert to array format for recharts
     return Object.entries(categoryCounts).map(([name, value]) => ({
       name,
       value
     }));
   };
-  
-  // Prepare activities progress data for the selected project
+
   const getActivitiesProgressData = (project = mockProjects[0]) => {
-    // Filter activities for current project
     const projectActivities = mockActivities.filter(activity => activity.projectId === project.id);
     
     return projectActivities.map(activity => ({
@@ -76,14 +66,11 @@ const Supervision = () => {
       estimado: activity.estimatedQuantity,
       ejecutado: activity.executedQuantity,
       porcentaje: activity.progress,
-      // Calculate delay severity (simulated)
       delay: Math.random() > 0.6 ? Math.floor(Math.random() * 10) : 0
     }));
   };
-  
-  // Prepare materials data for the selected project
+
   const getMaterialsData = (project = mockProjects[0]) => {
-    // Filter materials for current project
     const projectMaterials = mockMaterials.filter(material => material.projectId === project.id);
     
     return projectMaterials.map(material => ({
@@ -94,18 +81,37 @@ const Supervision = () => {
       enSitio: material.receivedQuantity - material.usedQuantity
     }));
   };
-  
-  // Calculate delay fill color based on delay value
+
   const getDelayColor = (delay: number) => {
-    if (delay <= 0) return "#4CAF50"; // On time or ahead
-    if (delay <= 3) return "#FFC107"; // Slight delay
-    if (delay <= 7) return "#FF9800"; // Moderate delay
-    return "#FF5252"; // Severe delay
+    if (delay <= 0) return "#4CAF50";
+    if (delay <= 3) return "#FFC107";
+    if (delay <= 7) return "#FF9800";
+    return "#FF5252";
   };
-  
+
+  const getActivityDelay = (activity: Activity) => {
+    if (!activity.expectedExecutionDate) return 0;
+    const today = new Date();
+    const expectedDate = new Date(activity.expectedExecutionDate);
+    const delay = differenceInDays(today, expectedDate);
+    return delay > 0 ? delay : 0;
+  };
+
+  const getMaterialsAvailability = (activity: Activity) => {
+    if (!activity.materialsRequired) return 0;
+    
+    const totalMaterials = activity.materialsRequired.length;
+    const availableMaterials = activity.materialsRequired.filter(materialId => {
+      const material = mockMaterials.find(m => m.id === materialId);
+      return material && (material.receivedQuantity - material.usedQuantity) > 0;
+    }).length;
+    
+    return Math.round((availableMaterials / totalMaterials) * 100);
+  };
+
   const allProjectsIssueData = processIssueCategoriesData();
   const currentProjectIssueData = currentProject ? processIssueCategoriesData(currentProject.id) : [];
-  
+
   return (
     <AppLayout requiredRoles={["Supervisor"]}>
       <div className="space-y-6">
@@ -121,7 +127,6 @@ const Supervision = () => {
           )}
         </div>
         
-        {/* Overview of all projects */}
         {!selectedProject ? (
           <>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -247,46 +252,43 @@ const Supervision = () => {
             </Card>
           </>
         ) : (
-          /* Detailed view of selected project */
           <>
             <div className="grid grid-cols-1 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle>{currentProject?.name} - Detalle</CardTitle>
                   <CardDescription>
-                    Avance del proyecto: {currentProject?.progress}% (Proyectado: {currentProject?.projectedProgress || currentProject?.progress + 10}%)
+                    Avance del proyecto: {currentProject?.progress}% (Proyectado: {currentProject?.projectedProgress}%)
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                    {/* Activities Progress */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <h3 className="text-lg font-medium">Ejecución de Actividades</h3>
                       <p className="text-sm text-gray-500 mb-2">
-                        Avance real vs. proyectado con código de colores según retraso
+                        Porcentaje de avance y días de retraso por actividad
                       </p>
-                      <div className="h-80 border rounded-md p-2">
+                      <div className="h-80">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart 
                             data={getActivitiesProgressData(currentProject)}
                             layout="vertical"
-                            margin={{ top: 5, right: 30, left: 5, bottom: 5 }}
+                            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                           >
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis type="number" />
                             <YAxis type="category" dataKey="name" width={100} />
                             <Tooltip />
-                            <Legend />
-                            <Bar dataKey="estimado" fill="#1EAEDB" name="Cantidad Estimada" />
-                            <Bar dataKey="ejecutado" fill="#4CAF50" name="Cantidad Ejecutada" />
                             <Bar 
-                              dataKey="delay" 
-                              fill="#FF5252" 
-                              name="Retraso (días)" 
-                              label={{ position: 'right', formatter: (value: number) => value > 0 ? `${value}d` : '' }}
+                              dataKey="porcentaje" 
+                              fill="#4CAF50" 
+                              name="% Avance"
                             >
                               {getActivitiesProgressData(currentProject).map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={getDelayColor(entry.delay)} />
+                                <Cell 
+                                  key={`cell-${index}`} 
+                                  fill={getDelayColor(entry.delay)}
+                                />
                               ))}
                             </Bar>
                           </BarChart>
@@ -294,65 +296,37 @@ const Supervision = () => {
                       </div>
                     </div>
                     
-                    {/* Materials Management */}
                     <div className="space-y-2">
-                      <h3 className="text-lg font-medium">Gestión de Materiales</h3>
+                      <h3 className="text-lg font-medium">Disponibilidad de Materiales</h3>
                       <p className="text-sm text-gray-500 mb-2">
-                        Cantidades estimadas, recibidas, utilizadas y disponibles
+                        Porcentaje de materiales disponibles por actividad
                       </p>
-                      <div className="h-80 border rounded-md p-2">
+                      <div className="h-80">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart 
-                            data={getMaterialsData(currentProject)}
+                            data={mockActivities
+                              .filter(act => act.projectId === currentProject?.id)
+                              .map(activity => ({
+                                name: activity.name.length > 20 
+                                  ? activity.name.substring(0, 20) + '...' 
+                                  : activity.name,
+                                disponibilidad: getMaterialsAvailability(activity)
+                              }))}
+                            layout="vertical"
                             margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                           >
                             <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis />
+                            <XAxis type="number" />
+                            <YAxis type="category" dataKey="name" width={100} />
                             <Tooltip />
-                            <Legend />
-                            <Bar dataKey="estimado" fill="#1EAEDB" name="Estimado" />
-                            <Bar dataKey="recibido" fill="#4CAF50" name="Recibido" />
-                            <Bar dataKey="usado" fill="#FFA726" name="Utilizado" />
-                            <Bar dataKey="enSitio" fill="#9C27B0" name="En Sitio" />
+                            <Bar 
+                              dataKey="disponibilidad" 
+                              fill="#2196F3" 
+                              name="% Materiales Disponibles" 
+                            />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
-                    </div>
-                    
-                    {/* Issue Categories Distribution */}
-                    <div className="space-y-2">
-                      <h3 className="text-lg font-medium">Novedades Reportadas</h3>
-                      <p className="text-sm text-gray-500 mb-2">
-                        Distribución por categoría de novedad
-                      </p>
-                      <div className="h-80 border rounded-md p-2">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={currentProjectIssueData}
-                              cx="50%"
-                              cy="50%"
-                              labelLine={false}
-                              outerRadius={80}
-                              fill="#8884d8"
-                              dataKey="value"
-                              label={({ name, percent }) => `${name.length > 15 ? name.substring(0, 15) + '...' : name}: ${(percent * 100).toFixed(0)}%`}
-                            >
-                              {currentProjectIssueData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <Tooltip formatter={(value) => [`${value} ocurrencias`, 'Cantidad']} />
-                            <Legend layout="vertical" verticalAlign="bottom" align="center" />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                      {currentProjectIssueData.length === 0 && (
-                        <div className="text-center py-10 text-gray-500">
-                          No hay novedades reportadas para este proyecto
-                        </div>
-                      )}
                     </div>
                   </div>
                 </CardContent>

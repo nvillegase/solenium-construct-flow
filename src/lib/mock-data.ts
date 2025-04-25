@@ -1,646 +1,481 @@
+import { User, Project, WorkQuantity, Material, PurchaseOrder, MaterialReception, MaterialDelivery, Activity, DailyExecution, DailyProjection } from './types';
 
-import { 
-  User, WorkQuantity, Material, PurchaseOrder, 
-  MaterialReception, MaterialDelivery, Activity, DailyExecution, Project
-} from './types';
-
-// Mock projects based on feedback
-export const mockProjects: Project[] = [
-  { 
-    id: 'project-1', 
-    name: 'Vallenata', 
-    location: 'Cesar', 
-    startDate: '2024-01-15', 
-    expectedEndDate: '2024-06-30', 
-    status: 'En Ejecución', 
-    progress: 65 
-  },
-  { 
-    id: 'project-2', 
-    name: 'El Son', 
-    location: 'Bolívar', 
-    startDate: '2024-02-10', 
-    expectedEndDate: '2024-07-15', 
-    status: 'En Ejecución', 
-    progress: 40 
-  },
-  { 
-    id: 'project-3', 
-    name: 'Puya', 
-    location: 'Atlántico', 
-    startDate: '2024-03-05', 
-    expectedEndDate: '2024-08-20', 
-    status: 'Planificación', 
-    progress: 15 
-  },
-  { 
-    id: 'project-4', 
-    name: 'Mapalé', 
-    location: 'Magdalena', 
-    startDate: '2023-11-10', 
-    expectedEndDate: '2024-05-30', 
-    status: 'En Ejecución', 
-    progress: 85 
-  }
-];
-
-// Mock users with different roles and project assignments
 export const mockUsers: User[] = [
-  { 
-    id: '1', 
-    name: 'Ana Gómez', 
-    email: 'ana@solenium.co', 
-    role: 'Diseñador', 
-    avatar: 'https://i.pravatar.cc/150?img=1',
-    projectIds: ['project-1', 'project-2', 'project-3']
+  {
+    id: 'user-1',
+    name: 'Alfredo Cabarcas',
+    email: 'alfredo.cabarcas@solenium.com',
+    role: 'Diseñador',
+    avatar: 'https://api.dicebear.com/7.x/lorelei/svg?seed=Alfredo',
+    projectIds: ['project-1', 'project-2']
   },
-  { 
-    id: '2', 
-    name: 'Carlos Ruiz', 
-    email: 'carlos@solenium.co', 
-    role: 'Suministro', 
-    avatar: 'https://i.pravatar.cc/150?img=3',
+  {
+    id: 'user-2',
+    name: 'Daniela Mendoza',
+    email: 'daniela.mendoza@solenium.com',
+    role: 'Suministro',
+    avatar: 'https://api.dicebear.com/7.x/lorelei/svg?seed=Daniela',
+    projectIds: ['project-1']
+  },
+  {
+    id: 'user-3',
+    name: 'Carlos Vives',
+    email: 'carlos.vives@solenium.com',
+    role: 'Almacenista',
+    avatar: 'https://api.dicebear.com/7.x/lorelei/svg?seed=Carlos',
+    projectIds: ['project-2']
+  },
+  {
+    id: 'user-4',
+    name: 'Shakira Isabel',
+    email: 'shakira.isabel@solenium.com',
+    role: 'Residente',
+    avatar: 'https://api.dicebear.com/7.x/lorelei/svg?seed=Shakira',
+    projectIds: ['project-3']
+  },
+  {
+    id: 'user-5',
+    name: 'Juanes Esteban',
+    email: 'juanes.esteban@solenium.com',
+    role: 'Supervisor',
+    avatar: 'https://api.dicebear.com/7.x/lorelei/svg?seed=Juanes',
     projectIds: ['project-1', 'project-2', 'project-3', 'project-4']
   },
-  { 
-    id: '3', 
-    name: 'Elena Díaz', 
-    email: 'elena@solenium.co', 
-    role: 'Almacenista', 
-    avatar: 'https://i.pravatar.cc/150?img=5',
-    projectIds: ['project-1'] // Almacenista solo asignada a un proyecto
+];
+
+export const mockProjects: Project[] = [
+  {
+    id: 'project-1',
+    name: 'Vallenata',
+    location: 'Valledupar',
+    startDate: '2024-01-01',
+    expectedEndDate: '2024-12-31',
+    status: 'En Ejecución',
+    progress: 45,
+    projectedProgress: 55,
   },
-  { 
-    id: '4', 
-    name: 'Miguel Torres', 
-    email: 'miguel@solenium.co', 
-    role: 'Residente', 
-    avatar: 'https://i.pravatar.cc/150?img=7',
-    projectIds: ['project-1', 'project-2'] // Residente puede estar en varios proyectos
+  {
+    id: 'project-2',
+    name: 'El Son',
+    location: 'Santa Marta',
+    startDate: '2024-02-01',
+    expectedEndDate: '2024-11-30',
+    status: 'En Ejecución',
+    progress: 30,
+    projectedProgress: 40,
   },
-  { 
-    id: '5', 
-    name: 'Laura Sánchez', 
-    email: 'laura@solenium.co', 
-    role: 'Supervisor', 
-    avatar: 'https://i.pravatar.cc/150?img=9',
-    projectIds: ['project-1', 'project-2', 'project-3', 'project-4'] // Supervisor accede a todos
+  {
+    id: 'project-3',
+    name: 'Puya',
+    location: 'Barranquilla',
+    startDate: '2024-03-01',
+    expectedEndDate: '2024-10-31',
+    status: 'En Ejecución',
+    progress: 65,
+    projectedProgress: 62,
+  },
+  {
+    id: 'project-4',
+    name: 'Mapalé',
+    location: 'Cartagena',
+    startDate: '2024-04-01',
+    expectedEndDate: '2024-09-30',
+    status: 'En Ejecución',
+    progress: 85,
+    projectedProgress: 88,
   },
 ];
 
-// Mock contractors
-export const mockContractors = [
-  'CONSTRUYENDO',
-  'ELECTROMONTES',
-  'OSPINAS',
-  'ELÉCTRICOS DEL CESAR'
-];
-
-// Work quantities for design section
 export const mockWorkQuantities: WorkQuantity[] = [
-  { id: '1', projectId: 'project-1', description: 'Excavación para cimentación', unit: 'm³', quantity: 85, expectedExecutionDate: '2024-05-15' },
-  { id: '2', projectId: 'project-1', description: 'Montaje de estructura metálica', unit: 'kg', quantity: 2500, expectedExecutionDate: '2024-05-20' },
-  { id: '3', projectId: 'project-1', description: 'Instalación de paneles solares', unit: 'unidad', quantity: 100, expectedExecutionDate: '2024-05-25', materialIds: ['1', '5'] },
-  { id: '4', projectId: 'project-1', description: 'Cableado eléctrico', unit: 'm', quantity: 1200, expectedExecutionDate: '2024-05-22', materialIds: ['3'] },
-  { id: '5', projectId: 'project-1', description: 'Instalación de inversores', unit: 'unidad', quantity: 5, expectedExecutionDate: '2024-06-01', materialIds: ['4'] },
-  { id: '6', projectId: 'project-2', description: 'Excavación para cimentación', unit: 'm³', quantity: 65, expectedExecutionDate: '2024-06-10' },
-  { id: '7', projectId: 'project-2', description: 'Montaje de estructura metálica', unit: 'kg', quantity: 2000, expectedExecutionDate: '2024-06-15' },
-  { id: '8', projectId: 'project-3', description: 'Diseño de Layout', unit: 'global', quantity: 1, expectedExecutionDate: '2024-04-20' },
-  { id: '9', projectId: 'project-4', description: 'Instalación de paneles solares', unit: 'unidad', quantity: 150, expectedExecutionDate: '2024-04-10' },
-  { id: '10', projectId: 'project-4', description: 'Pruebas finales', unit: 'global', quantity: 1, expectedExecutionDate: '2024-05-15' },
+  {
+    id: 'wq-1',
+    projectId: 'project-1',
+    description: 'Excavación para cimientos',
+    unit: 'm3',
+    quantity: 150,
+    expectedExecutionDate: '2024-05-10',
+    materialIds: ['mat-1', 'mat-2']
+  },
+  {
+    id: 'wq-2',
+    projectId: 'project-1',
+    description: 'Construcción de muros de contención',
+    unit: 'm2',
+    quantity: 300,
+    expectedExecutionDate: '2024-05-15',
+    materialIds: ['mat-3', 'mat-4']
+  },
+  {
+    id: 'wq-3',
+    projectId: 'project-2',
+    description: 'Instalación de sistema eléctrico',
+    unit: 'punto',
+    quantity: 200,
+    expectedExecutionDate: '2024-06-01',
+    materialIds: ['mat-5', 'mat-6']
+  },
+  {
+    id: 'wq-4',
+    projectId: 'project-3',
+    description: 'Colocación de pisos',
+    unit: 'm2',
+    quantity: 400,
+    expectedExecutionDate: '2024-06-15',
+    materialIds: ['mat-7', 'mat-8']
+  },
+  {
+    id: 'wq-5',
+    projectId: 'project-4',
+    description: 'Instalación de paneles solares',
+    unit: 'panel',
+    quantity: 100,
+    expectedExecutionDate: '2024-07-01',
+    materialIds: ['mat-9', 'mat-10']
+  },
 ];
 
-// Materials for design and inventory sections
 export const mockMaterials: Material[] = [
-  { id: '1', projectId: 'project-1', name: 'Panel solar 450W', unit: 'unidad', estimatedQuantity: 100, receivedQuantity: 80, usedQuantity: 60 },
-  { id: '2', projectId: 'project-1', name: 'Estructura de soporte', unit: 'kg', estimatedQuantity: 2500, receivedQuantity: 2000, usedQuantity: 1800 },
-  { id: '3', projectId: 'project-1', name: 'Cable solar 6mm²', unit: 'm', estimatedQuantity: 1200, receivedQuantity: 1200, usedQuantity: 900 },
-  { id: '4', projectId: 'project-1', name: 'Inversor 60kW', unit: 'unidad', estimatedQuantity: 5, receivedQuantity: 3, usedQuantity: 3 },
-  { id: '5', projectId: 'project-1', name: 'Conectores MC4', unit: 'par', estimatedQuantity: 200, receivedQuantity: 200, usedQuantity: 150 },
-  { id: '6', projectId: 'project-2', name: 'Panel solar 500W', unit: 'unidad', estimatedQuantity: 80, receivedQuantity: 60, usedQuantity: 40 },
-  { id: '7', projectId: 'project-2', name: 'Estructura de soporte', unit: 'kg', estimatedQuantity: 2000, receivedQuantity: 1500, usedQuantity: 1200 },
-  { id: '8', projectId: 'project-3', name: 'Kit de diseño', unit: 'unidad', estimatedQuantity: 1, receivedQuantity: 1, usedQuantity: 0 },
-  { id: '9', projectId: 'project-4', name: 'Panel solar 450W', unit: 'unidad', estimatedQuantity: 150, receivedQuantity: 150, usedQuantity: 150 },
-  { id: '10', projectId: 'project-4', name: 'Kit de pruebas', unit: 'unidad', estimatedQuantity: 3, receivedQuantity: 3, usedQuantity: 2 },
+  {
+    id: 'mat-1',
+    projectId: 'project-1',
+    name: 'Cemento Portland Tipo I',
+    unit: 'tonelada',
+    estimatedQuantity: 50,
+    receivedQuantity: 45,
+    usedQuantity: 30
+  },
+  {
+    id: 'mat-2',
+    projectId: 'project-1',
+    name: 'Acero de refuerzo corrugado',
+    unit: 'tonelada',
+    estimatedQuantity: 30,
+    receivedQuantity: 28,
+    usedQuantity: 20
+  },
+  {
+    id: 'mat-3',
+    projectId: 'project-2',
+    name: 'Bloque de concreto #4',
+    unit: 'unidad',
+    estimatedQuantity: 5000,
+    receivedQuantity: 4800,
+    usedQuantity: 4000
+  },
+  {
+    id: 'mat-4',
+    projectId: 'project-2',
+    name: 'Mortero de pega',
+    unit: 'saco',
+    estimatedQuantity: 100,
+    receivedQuantity: 95,
+    usedQuantity: 80
+  },
+  {
+    id: 'mat-5',
+    projectId: 'project-3',
+    name: 'Cable THHN #12',
+    unit: 'metro',
+    estimatedQuantity: 1000,
+    receivedQuantity: 950,
+    usedQuantity: 800
+  },
+  {
+    id: 'mat-6',
+    projectId: 'project-3',
+    name: 'Tubería conduit PVC',
+    unit: 'metro',
+    estimatedQuantity: 500,
+    receivedQuantity: 480,
+    usedQuantity: 400
+  },
+  {
+    id: 'mat-7',
+    projectId: 'project-4',
+    name: 'Cerámica 45x45',
+    unit: 'm2',
+    estimatedQuantity: 450,
+    receivedQuantity: 430,
+    usedQuantity: 350
+  },
+  {
+    id: 'mat-8',
+    projectId: 'project-4',
+    name: 'Boquilla para cerámica',
+    unit: 'saco',
+    estimatedQuantity: 50,
+    receivedQuantity: 48,
+    usedQuantity: 40
+  },
+  {
+    id: 'mat-9',
+    projectId: 'project-4',
+    name: 'Panel Solar 450W',
+    unit: 'panel',
+    estimatedQuantity: 110,
+    receivedQuantity: 105,
+    usedQuantity: 90
+  },
+  {
+    id: 'mat-10',
+    projectId: 'project-4',
+    name: 'Inversor 5kW',
+    unit: 'unidad',
+    estimatedQuantity: 10,
+    receivedQuantity: 10,
+    usedQuantity: 8
+  },
 ];
 
-// Purchase orders for supply section
 export const mockPurchaseOrders: PurchaseOrder[] = [
-  { 
-    id: '1', 
-    projectId: 'project-1', // Primary project
-    projectName: 'Vallenata', 
+  {
+    id: 'order-1',
     materials: [
-      { id: '1-1', materialId: '1', materialName: 'Panel solar 450W', quantity: 100 }
+      { id: 'item-1', materialId: 'mat-1', materialName: 'Panel Solar 450W', quantity: 100, projectId: 'project-1' },
+      { id: 'item-2', materialId: 'mat-2', materialName: 'Inversor 60kW', quantity: 2, projectId: 'project-2' }
     ],
-    supplier: 'SolarTech Inc', 
-    estimatedDeliveryDate: '2024-05-15', 
-    actualDeliveryDate: '2024-05-17',
-    status: 'Recibido Total', 
-    createdAt: '2024-04-01' 
+    supplier: 'SolarTech',
+    estimatedDeliveryDate: '2024-05-15',
+    status: 'En Tránsito',
+    createdAt: '2024-04-01',
   },
-  { 
-    id: '2', 
-    projectId: 'project-1', 
-    projectName: 'Vallenata',
+  {
+    id: 'order-2',
     materials: [
-      { id: '2-1', materialId: '2', materialName: 'Estructura de soporte', quantity: 2500 }
+      { id: 'item-3', materialId: 'mat-3', materialName: 'Cable de cobre #10', quantity: 500, projectId: 'project-3' },
+      { id: 'item-4', materialId: 'mat-4', materialName: 'Interruptor termomagnético 20A', quantity: 100, projectId: 'project-4' }
     ],
-    supplier: 'MetalWorks SA', 
-    estimatedDeliveryDate: '2024-05-10', 
-    actualDeliveryDate: '2024-05-10',
-    status: 'Recibido Parcial', 
-    createdAt: '2024-04-05' 
+    supplier: 'ElectriMax',
+    estimatedDeliveryDate: '2024-05-20',
+    status: 'Pendiente',
+    createdAt: '2024-04-05',
   },
-  { 
-    id: '3', 
-    projectId: 'project-1', 
-    projectName: 'Vallenata',
+  {
+    id: 'order-3',
     materials: [
-      { id: '3-1', materialId: '3', materialName: 'Cable solar 6mm²', quantity: 1200 },
-      { id: '3-2', materialId: '5', materialName: 'Conectores MC4', quantity: 200 }
+      { id: 'item-5', materialId: 'mat-5', materialName: 'Tubería PVC 1/2"', quantity: 300, projectId: 'project-1' },
+      { id: 'item-6', materialId: 'mat-6', materialName: 'Caja de registro 4x4', quantity: 150, projectId: 'project-2' }
     ],
-    supplier: 'ElectroSolar Ltda', 
-    estimatedDeliveryDate: '2024-04-25', 
-    actualDeliveryDate: '2024-04-25',
-    status: 'Recibido Total', 
-    createdAt: '2024-04-10' 
-  },
-  { 
-    id: '4', 
-    projectId: 'project-1', 
-    projectName: 'Vallenata',
-    materials: [
-      { id: '4-1', materialId: '4', materialName: 'Inversor 60kW', quantity: 5 }
-    ],
-    supplier: 'PowerInverters Co', 
-    estimatedDeliveryDate: '2024-05-30', 
-    status: 'En Tránsito', 
-    createdAt: '2024-04-15' 
-  },
-  { 
-    id: '5', 
-    projectId: 'project-2', 
-    projectName: 'El Son',
-    materials: [
-      { id: '5-1', materialId: '6', materialName: 'Panel solar 500W', quantity: 80 },
-      { id: '5-2', materialId: '7', materialName: 'Estructura de soporte', quantity: 2000 }
-    ],
-    supplier: 'SolarTech Inc', 
-    estimatedDeliveryDate: '2024-06-05', 
-    actualDeliveryDate: '2024-06-02',
-    status: 'Recibido Parcial', 
-    createdAt: '2024-05-01' 
-  },
-  // Una orden con materiales para múltiples proyectos
-  { 
-    id: '6', 
-    projectId: 'project-3', // Primary project for the order
-    projectName: 'Múltiples Proyectos',
-    materials: [
-      { id: '6-1', materialId: '8', materialName: 'Kit de diseño', quantity: 1, projectId: 'project-3' },
-      { id: '6-2', materialId: '10', materialName: 'Kit de pruebas', quantity: 3, projectId: 'project-4' },
-    ],
-    supplier: 'EquiposSolares SAS', 
-    estimatedDeliveryDate: '2024-04-15', 
-    actualDeliveryDate: '2024-04-14',
-    status: 'Recibido Total', 
-    createdAt: '2024-03-20' 
+    supplier: 'Construred',
+    estimatedDeliveryDate: '2024-05-25',
+    actualDeliveryDate: '2024-05-23',
+    status: 'Recibido Total',
+    createdAt: '2024-04-10',
   },
 ];
 
-// Material receptions for inventory section
 export const mockMaterialReceptions: MaterialReception[] = [
-  { 
-    id: '1', 
+  {
+    id: 'reception-1',
     projectId: 'project-1',
-    orderId: '1', 
-    materialId: '1', 
-    materialName: 'Panel solar 450W', 
-    quantity: 80, 
-    status: 'Bueno', 
-    date: '2024-05-17', 
-    observation: 'Recepción parcial, 20 unidades pendientes por entrega' 
+    orderId: 'order-1',
+    materialId: 'mat-1',
+    materialName: 'Panel Solar 450W',
+    quantity: 50,
+    status: 'Bueno',
+    date: '2024-05-15',
+    observation: 'Primera entrega de paneles solares'
   },
-  { 
-    id: '2', 
-    projectId: 'project-1',
-    orderId: '2', 
-    materialId: '2', 
-    materialName: 'Estructura de soporte', 
-    quantity: 2000, 
-    status: 'Bueno', 
-    date: '2024-05-10', 
-    observation: 'Faltan 500kg por entregar' 
+  {
+    id: 'reception-2',
+    projectId: 'project-2',
+    orderId: 'order-1',
+    materialId: 'mat-2',
+    materialName: 'Inversor 60kW',
+    quantity: 2,
+    status: 'Bueno',
+    date: '2024-05-15',
+    observation: 'Entrega completa de inversores'
   },
-  { 
-    id: '3', 
-    projectId: 'project-1',
-    orderId: '3', 
-    materialId: '3', 
-    materialName: 'Cable solar 6mm²', 
-    quantity: 1200, 
-    status: 'Bueno', 
-    date: '2024-04-25', 
-    observation: 'Entrega completa' 
-  },
-  { 
-    id: '4', 
-    projectId: 'project-1',
-    orderId: '3', 
-    materialId: '5', 
-    materialName: 'Conectores MC4', 
-    quantity: 200, 
-    status: 'Bueno', 
-    date: '2024-04-25', 
-    observation: 'Entrega completa' 
-  },
-  { 
-    id: '5', 
-    projectId: 'project-1',
-    orderId: '4', 
-    materialId: '4', 
-    materialName: 'Inversor 60kW', 
-    quantity: 3, 
-    status: 'Regular', 
-    date: '2024-05-25', 
-    observation: 'Un inversor presenta abolladuras en la carcasa' 
+  {
+    id: 'reception-3',
+    projectId: 'project-3',
+    orderId: 'order-3',
+    materialId: 'mat-5',
+    materialName: 'Tubería PVC 1/2"',
+    quantity: 300,
+    status: 'Bueno',
+    date: '2024-05-23',
+    observation: 'Entrega de tubería en perfecto estado'
   },
 ];
 
-// Material deliveries for inventory section
 export const mockMaterialDeliveries: MaterialDelivery[] = [
-  { 
-    id: '1', 
+  {
+    id: 'delivery-1',
     projectId: 'project-1',
-    materialId: '1', 
-    materialName: 'Panel solar 450W', 
-    receivedBy: 'Miguel Torres', 
-    quantity: 60, 
-    date: '2024-05-20' 
+    materialId: 'mat-1',
+    materialName: 'Cemento Portland Tipo I',
+    receivedBy: 'Carlos Pérez',
+    quantity: 10,
+    date: '2024-05-16'
   },
-  { 
-    id: '2', 
-    projectId: 'project-1',
-    materialId: '2', 
-    materialName: 'Estructura de soporte', 
-    receivedBy: 'Miguel Torres', 
-    quantity: 1800, 
-    date: '2024-05-12' 
+  {
+    id: 'delivery-2',
+    projectId: 'project-2',
+    materialId: 'mat-3',
+    materialName: 'Bloque de concreto #4',
+    receivedBy: 'Ana Gómez',
+    quantity: 500,
+    date: '2024-05-17'
   },
-  { 
-    id: '3', 
-    projectId: 'project-1',
-    materialId: '3', 
-    materialName: 'Cable solar 6mm²', 
-    receivedBy: 'Miguel Torres', 
-    quantity: 900, 
-    date: '2024-04-28' 
-  },
-  { 
-    id: '4', 
-    projectId: 'project-1',
-    materialId: '4', 
-    materialName: 'Inversor 60kW', 
-    receivedBy: 'Miguel Torres', 
-    quantity: 3, 
-    date: '2024-05-26' 
-  },
-  { 
-    id: '5', 
-    projectId: 'project-1',
-    materialId: '5', 
-    materialName: 'Conectores MC4', 
-    receivedBy: 'Miguel Torres', 
-    quantity: 150, 
-    date: '2024-04-28' 
+  {
+    id: 'delivery-3',
+    projectId: 'project-3',
+    materialId: 'mat-5',
+    materialName: 'Cable THHN #12',
+    receivedBy: 'Luis Torres',
+    quantity: 200,
+    date: '2024-05-18'
   },
 ];
 
-// Activities for construction section
 export const mockActivities: Activity[] = [
-  { 
-    id: '1',
+  {
+    id: 'act-1',
     projectId: 'project-1',
-    workQuantityId: '1', 
-    name: 'Excavación para cimentación', 
-    contractor: 'CONSTRUYENDO', 
-    estimatedQuantity: 85, 
-    executedQuantity: 70, 
-    unit: 'm³', 
-    date: '2024-05-01', 
-    progress: 82,
-    expectedExecutionDate: '2024-05-15'
+    workQuantityId: 'wq-1',
+    name: 'Excavación para cimientos',
+    contractor: 'Excavaciones S.A.',
+    estimatedQuantity: 150,
+    executedQuantity: 120,
+    unit: 'm3',
+    date: '2024-05-15',
+    expectedExecutionDate: '2024-05-20',
+    progress: 80,
+    materialsRequired: ['mat-1', 'mat-2']
   },
-  { 
-    id: '2', 
+  {
+    id: 'act-2',
     projectId: 'project-1',
-    workQuantityId: '2',
-    name: 'Montaje de estructura metálica', 
-    contractor: 'OSPINAS', 
-    estimatedQuantity: 2500, 
-    executedQuantity: 1800, 
-    unit: 'kg', 
-    date: '2024-05-15', 
-    progress: 72,
-    expectedExecutionDate: '2024-05-20'
+    workQuantityId: 'wq-2',
+    name: 'Construcción de muros de contención',
+    contractor: 'Construcciones Unidas',
+    estimatedQuantity: 300,
+    executedQuantity: 200,
+    unit: 'm2',
+    date: '2024-05-16',
+    expectedExecutionDate: '2024-05-25',
+    progress: 67,
+    materialsRequired: ['mat-3', 'mat-4']
   },
-  { 
-    id: '3', 
-    projectId: 'project-1',
-    workQuantityId: '3',
-    name: 'Instalación de paneles solares', 
-    contractor: 'ELECTROMONTES', 
-    estimatedQuantity: 100, 
-    executedQuantity: 60, 
-    unit: 'unidad', 
-    date: '2024-05-25', 
-    progress: 60,
-    expectedExecutionDate: '2024-05-25'
-  },
-  { 
-    id: '4', 
-    projectId: 'project-1',
-    workQuantityId: '4',
-    name: 'Cableado eléctrico', 
-    contractor: 'ELÉCTRICOS DEL CESAR', 
-    estimatedQuantity: 1200, 
-    executedQuantity: 900, 
-    unit: 'm', 
-    date: '2024-05-20', 
+  {
+    id: 'act-3',
+    projectId: 'project-2',
+    workQuantityId: 'wq-3',
+    name: 'Instalación de sistema eléctrico',
+    contractor: 'Electromontajes SAS',
+    estimatedQuantity: 200,
+    executedQuantity: 150,
+    unit: 'punto',
+    date: '2024-05-17',
+    expectedExecutionDate: '2024-06-01',
     progress: 75,
-    expectedExecutionDate: '2024-05-22'
+    materialsRequired: ['mat-5', 'mat-6']
   },
-  { 
-    id: '5', 
-    projectId: 'project-1',
-    workQuantityId: '5',
-    name: 'Instalación de inversores', 
-    contractor: 'ELÉCTRICOS DEL CESAR', 
-    estimatedQuantity: 5, 
-    executedQuantity: 3, 
-    unit: 'unidad', 
-    date: '2024-06-01', 
-    progress: 60,
-    expectedExecutionDate: '2024-06-01'
+  {
+    id: 'act-4',
+    projectId: 'project-3',
+    workQuantityId: 'wq-4',
+    name: 'Colocación de pisos',
+    contractor: 'Pisos y Acabados S.A.',
+    estimatedQuantity: 400,
+    executedQuantity: 300,
+    unit: 'm2',
+    date: '2024-05-18',
+    expectedExecutionDate: '2024-06-15',
+    progress: 75,
+    materialsRequired: ['mat-7', 'mat-8']
+  },
+  {
+    id: 'act-5',
+    projectId: 'project-4',
+    workQuantityId: 'wq-5',
+    name: 'Instalación de paneles solares',
+    contractor: 'Sistemas Solares Ltda',
+    estimatedQuantity: 100,
+    executedQuantity: 80,
+    unit: 'panel',
+    date: '2024-05-19',
+    expectedExecutionDate: '2024-07-01',
+    progress: 80,
+    materialsRequired: ['mat-9', 'mat-10']
   },
 ];
 
-// Daily executions for construction section
 export const mockDailyExecutions: DailyExecution[] = [
-  { 
-    id: '1',
+  {
+    id: 'exec-1',
     projectId: 'project-1',
-    activityId: '1', 
-    activityName: 'Excavación para cimentación', 
-    executedQuantity: 20, 
-    date: '2024-05-01', 
-    notes: 'Terreno rocoso, avance más lento de lo esperado' 
-  },
-  { 
-    id: '2', 
-    projectId: 'project-1',
-    activityId: '1', 
-    activityName: 'Excavación para cimentación', 
-    executedQuantity: 25, 
-    date: '2024-05-02', 
-    notes: 'Se incorporó maquinaria adicional',
-    issueCategory: 'Daño de maquinaria o herramienta'
-  },
-  { 
-    id: '3', 
-    projectId: 'project-1',
-    activityId: '1', 
-    activityName: 'Excavación para cimentación', 
-    executedQuantity: 25, 
-    date: '2024-05-03', 
-    notes: 'Finalización de la excavación principal' 
-  },
-  { 
-    id: '4', 
-    projectId: 'project-1',
-    activityId: '2', 
-    activityName: 'Montaje de estructura metálica', 
-    executedQuantity: 600, 
-    date: '2024-05-15', 
-    notes: 'Inicio del montaje de estructuras' 
-  },
-  { 
-    id: '5', 
-    projectId: 'project-1',
-    activityId: '2', 
-    activityName: 'Montaje de estructura metálica', 
-    executedQuantity: 650, 
-    date: '2024-05-16', 
-    notes: 'Avance según lo planeado' 
-  },
-  { 
-    id: '6', 
-    projectId: 'project-1',
-    activityId: '2', 
-    activityName: 'Montaje de estructura metálica', 
-    executedQuantity: 550, 
-    date: '2024-05-17', 
-    notes: 'Retraso por condiciones climáticas',
+    activityId: 'act-1',
+    activityName: 'Excavación para cimientos',
+    executedQuantity: 30,
+    date: '2024-05-15',
+    notes: 'Se avanzó según lo previsto',
     issueCategory: 'Lluvia moderada'
   },
-  { 
-    id: '7', 
+  {
+    id: 'exec-2',
     projectId: 'project-1',
-    activityId: '3', 
-    activityName: 'Instalación de paneles solares', 
-    executedQuantity: 30, 
-    date: '2024-05-25', 
-    notes: 'Inicio de instalación de paneles',
+    activityId: 'act-2',
+    activityName: 'Construcción de muros de contención',
+    executedQuantity: 20,
+    date: '2024-05-16',
+    notes: 'Retraso por falta de materiales',
     issueCategory: 'Falta de suministro'
   },
-  { 
-    id: '8', 
-    projectId: 'project-1',
-    activityId: '3', 
-    activityName: 'Instalación de paneles solares', 
-    executedQuantity: 30, 
-    date: '2024-05-26', 
-    notes: 'Continúa instalación según cronograma' 
-  },
-  { 
-    id: '9', 
-    projectId: 'project-1',
-    activityId: '4', 
-    activityName: 'Cableado eléctrico', 
-    executedQuantity: 450, 
-    date: '2024-05-20', 
-    notes: 'Inicio de cableado troncal' 
-  },
-  { 
-    id: '10', 
-    projectId: 'project-1',
-    activityId: '4', 
-    activityName: 'Cableado eléctrico', 
-    executedQuantity: 450, 
-    date: '2024-05-21', 
-    notes: 'Continuación del cableado',
-    issueCategory: 'Vandalismo'
-  },
-  { 
-    id: '11', 
-    projectId: 'project-1',
-    activityId: '5', 
-    activityName: 'Instalación de inversores', 
-    executedQuantity: 3, 
-    date: '2024-06-01', 
-    notes: 'Instalación de los primeros tres inversores',
-    issueCategory: 'Otros',
-    issueOtherDescription: 'Falta de insumos complementarios'
-  },
-];
-
-// Daily planning for construction section
-export const mockDailyPlanning = [
   {
-    id: '1',
-    projectId: 'project-1',
-    date: '2024-05-01',
-    activities: [
-      {
-        id: '1-1',
-        activityId: '1',
-        activityName: 'Excavación para cimentación',
-        contractor: 'CONSTRUYENDO',
-        quantity: 20,
-        unit: 'm³',
-        executed: true
-      }
-    ]
-  },
-  {
-    id: '2',
-    projectId: 'project-1',
-    date: '2024-05-02',
-    activities: [
-      {
-        id: '2-1',
-        activityId: '1',
-        activityName: 'Excavación para cimentación',
-        contractor: 'CONSTRUYENDO',
-        quantity: 25,
-        unit: 'm³',
-        executed: true
-      }
-    ]
-  },
-  {
-    id: '3',
-    projectId: 'project-1',
-    date: '2024-05-03',
-    activities: [
-      {
-        id: '3-1',
-        activityId: '1',
-        activityName: 'Excavación para cimentación',
-        contractor: 'CONSTRUYENDO',
-        quantity: 25,
-        unit: 'm³',
-        executed: true
-      }
-    ]
-  },
-  {
-    id: '4',
-    projectId: 'project-1',
-    date: '2024-05-15',
-    activities: [
-      {
-        id: '4-1',
-        activityId: '2',
-        activityName: 'Montaje de estructura metálica',
-        contractor: 'OSPINAS',
-        quantity: 600,
-        unit: 'kg',
-        executed: true
-      }
-    ]
-  },
-  {
-    id: '5',
-    projectId: 'project-1',
-    date: '2024-05-16',
-    activities: [
-      {
-        id: '5-1',
-        activityId: '2',
-        activityName: 'Montaje de estructura metálica',
-        contractor: 'OSPINAS',
-        quantity: 650,
-        unit: 'kg',
-        executed: true
-      }
-    ]
-  },
-  {
-    id: '6',
-    projectId: 'project-1',
+    id: 'exec-3',
+    projectId: 'project-2',
+    activityId: 'act-3',
+    activityName: 'Instalación de sistema eléctrico',
+    executedQuantity: 25,
     date: '2024-05-17',
-    activities: [
-      {
-        id: '6-1',
-        activityId: '2',
-        activityName: 'Montaje de estructura metálica',
-        contractor: 'OSPINAS',
-        quantity: 550,
-        unit: 'kg',
-        executed: true
-      }
-    ]
+    notes: 'Personal adicional para acelerar la instalación',
+    issueCategory: 'Otros',
+    issueOtherDescription: 'Falta de herramienta especializada'
   },
   {
-    id: '7',
-    projectId: 'project-1',
-    date: '2024-05-25',
-    activities: [
-      {
-        id: '7-1',
-        activityId: '3',
-        activityName: 'Instalación de paneles solares',
-        contractor: 'ELECTROMONTES',
-        quantity: 30,
-        unit: 'unidad',
-        executed: true
-      }
-    ]
+    id: 'exec-4',
+    projectId: 'project-3',
+    activityId: 'act-4',
+    activityName: 'Colocación de pisos',
+    executedQuantity: 40,
+    date: '2024-05-18',
+    notes: 'Se completó el área de la cocina',
+    issueCategory: 'RTB incompleto'
   },
   {
-    id: '8',
-    projectId: 'project-1',
-    date: '2024-05-26',
-    activities: [
-      {
-        id: '8-1',
-        activityId: '3',
-        activityName: 'Instalación de paneles solares',
-        contractor: 'ELECTROMONTES',
-        quantity: 30,
-        unit: 'unidad',
-        executed: true
-      }
-    ]
+    id: 'exec-5',
+    projectId: 'project-4',
+    activityId: 'act-5',
+    activityName: 'Instalación de paneles solares',
+    executedQuantity: 15,
+    date: '2024-05-19',
+    notes: 'Se instalaron los paneles en el techo',
+    issueCategory: 'Sin novedad'
   },
-  {
-    id: '9',
-    projectId: 'project-1',
-    date: '2024-05-27',
-    activities: [
-      {
-        id: '9-1',
-        activityId: '3',
-        activityName: 'Instalación de paneles solares',
-        contractor: 'ELECTROMONTES',
-        quantity: 40,
-        unit: 'unidad',
-        executed: false
-      }
-    ]
-  }
 ];
 
-export const currentUser: User = mockUsers[4]; // Default to Supervisor role
+export const mockDailyProjections: DailyProjection[] = [
+  {
+    id: 'proj-1',
+    projectId: 'project-1',
+    date: '2024-04-25',
+    activities: [
+      {
+        activityId: 'act-1',
+        contractor: 'CONSTRUYENDO',
+        quantity: 50,
+        unit: 'und'
+      },
+      {
+        activityId: 'act-2',
+        contractor: 'ELECTROMONTES',
+        quantity: 30,
+        unit: 'm'
+      }
+    ],
+    isExecutionComplete: false
+  },
+];

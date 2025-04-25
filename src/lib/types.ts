@@ -133,4 +133,5 @@ export type IssueCategory =
   | 'RTB incompleto'
   | 'Daño de maquinaria o herramienta'
   | 'Sin novedad'
+  | 'Programación hincadora'
   | 'Otros';

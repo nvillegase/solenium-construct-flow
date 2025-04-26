@@ -284,31 +284,33 @@ export const mockMaterials: Material[] = [
 export const mockPurchaseOrders: PurchaseOrder[] = [
   {
     id: 'order-1',
-    projectId: 'project-1',
+    projectIds: ['project-1'],
     materials: [
       { id: 'item-1', materialId: 'mat-1', materialName: 'Panel Solar 450W', quantity: 100, projectId: 'project-1' },
       { id: 'item-2', materialId: 'mat-2', materialName: 'Inversor 60kW', quantity: 2, projectId: 'project-2' }
     ],
     supplier: 'SolarTech',
     estimatedDeliveryDate: '2024-05-15',
+    actualDeliveryDate: '2024-05-10',
     status: 'En Tránsito',
     createdAt: '2024-04-01',
   },
   {
     id: 'order-2',
-    projectId: 'project-2',
+    projectIds: ['project-2'],
     materials: [
       { id: 'item-3', materialId: 'mat-3', materialName: 'Cable de cobre #10', quantity: 500, projectId: 'project-3' },
       { id: 'item-4', materialId: 'mat-4', materialName: 'Interruptor termomagnético 20A', quantity: 100, projectId: 'project-4' }
     ],
     supplier: 'ElectriMax',
     estimatedDeliveryDate: '2024-05-20',
+    actualDeliveryDate: null,
     status: 'Pendiente',
     createdAt: '2024-04-05',
   },
   {
     id: 'order-3',
-    projectId: 'project-3',
+    projectIds: ['project-3'],
     materials: [
       { id: 'item-5', materialId: 'mat-5', materialName: 'Tubería PVC 1/2"', quantity: 300, projectId: 'project-1' },
       { id: 'item-6', materialId: 'mat-6', materialName: 'Caja de registro 4x4', quantity: 150, projectId: 'project-2' }
@@ -393,7 +395,7 @@ export const mockActivities: Activity[] = [
     projectId: 'project-1',
     workQuantityId: 'wq-1',
     name: 'Excavación para cimientos',
-    contractor: 'Excavaciones S.A.',
+    contractorId: 'Excavaciones S.A.',
     estimatedQuantity: 150,
     executedQuantity: 120,
     unit: 'm3',
@@ -407,7 +409,7 @@ export const mockActivities: Activity[] = [
     projectId: 'project-1',
     workQuantityId: 'wq-2',
     name: 'Construcción de muros de contención',
-    contractor: 'Construcciones Unidas',
+    contractorId: 'Construcciones Unidas',
     estimatedQuantity: 300,
     executedQuantity: 200,
     unit: 'm2',
@@ -421,7 +423,7 @@ export const mockActivities: Activity[] = [
     projectId: 'project-2',
     workQuantityId: 'wq-3',
     name: 'Instalación de sistema eléctrico',
-    contractor: 'Electromontajes SAS',
+    contractorId: 'Electromontajes SAS',
     estimatedQuantity: 200,
     executedQuantity: 150,
     unit: 'punto',
@@ -435,7 +437,7 @@ export const mockActivities: Activity[] = [
     projectId: 'project-3',
     workQuantityId: 'wq-4',
     name: 'Colocación de pisos',
-    contractor: 'Pisos y Acabados S.A.',
+    contractorId: 'Pisos y Acabados S.A.',
     estimatedQuantity: 400,
     executedQuantity: 300,
     unit: 'm2',
@@ -449,7 +451,7 @@ export const mockActivities: Activity[] = [
     projectId: 'project-4',
     workQuantityId: 'wq-5',
     name: 'Instalación de paneles solares',
-    contractor: 'Sistemas Solares Ltda',
+    contractorId: 'Sistemas Solares Ltda',
     estimatedQuantity: 100,
     executedQuantity: 80,
     unit: 'panel',
@@ -463,7 +465,7 @@ export const mockActivities: Activity[] = [
     projectId: 'project-1',
     workQuantityId: 'wq-6',
     name: 'Montaje de estructura metálica',
-    contractor: 'Construyendo SAS',
+    contractorId: 'Construyendo SAS',
     estimatedQuantity: 5000,
     executedQuantity: 3500,
     unit: 'kg',
@@ -477,7 +479,7 @@ export const mockActivities: Activity[] = [
     projectId: 'project-2',
     workQuantityId: 'wq-7',
     name: 'Construcción de cerramientos',
-    contractor: 'OSPINAS',
+    contractorId: 'OSPINAS',
     estimatedQuantity: 800,
     executedQuantity: 500,
     unit: 'm2',
@@ -562,6 +564,9 @@ export const mockDailyExecutions: DailyExecution[] = [
   }
 ];
 
+
+
+
 export const mockDailyProjections: DailyProjection[] = [
   {
     id: 'proj-1',
@@ -570,13 +575,13 @@ export const mockDailyProjections: DailyProjection[] = [
     activities: [
       {
         activityId: 'act-1',
-        contractor: 'CONSTRUYENDO',
+        contractorId: 'CONSTRUYENDO',
         quantity: 50,
         unit: 'und'
       },
       {
         activityId: 'act-2',
-        contractor: 'ELECTROMONTES',
+        contractorId: 'ELECTROMONTES',
         quantity: 30,
         unit: 'm'
       }

@@ -279,13 +279,20 @@ const Inventory = () => {
                   
                   <div className="space-y-2">
                     <Label htmlFor="reception-quantity">Cantidad</Label>
-                    <Input
-                      id="reception-quantity"
-                      type="number"
-                      min="1"
-                      value={newReception.quantity}
-                      onChange={e => setNewReception({...newReception, quantity: parseInt(e.target.value) || 0})}
-                    />
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        id="reception-quantity"
+                        type="number"
+                        min="1"
+                        value={newReception.quantity}
+                        onChange={e => setNewReception({...newReception, quantity: parseInt(e.target.value) || 0})}
+                      />
+                      <span className="text-sm text-gray-500">
+                        {newReception.materialId
+                          ? mockMaterials.find(m => m.id === newReception.materialId)?.unit || "unidad"
+                          : ""}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 

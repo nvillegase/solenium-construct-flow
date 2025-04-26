@@ -23,12 +23,12 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
   
   // Navigation items with role-based access
   const navItems = [
-    {
-      name: "Dashboard",
-      path: "/",
-      icon: <Home size={20} />,
-      roles: ["Diseñador", "Suministro", "Almacenista", "Residente", "Supervisor"],
-    },
+    // {
+    //   name: "Dashboard",
+    //   path: "/",
+    //   icon: <Home size={20} />,
+    //   roles: ["Diseñador", "Suministro", "Almacenista", "Residente", "Supervisor"],
+    // },
     {
       name: "Diseño",
       path: "/diseno",

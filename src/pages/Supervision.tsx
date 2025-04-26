@@ -107,6 +107,26 @@ const Supervision = () => {
     return Math.round((availableMaterials / totalMaterials) * 100);
   };
 
+    // Prepare delivery performance data
+  const getDeliveryPerformanceData = (project = mockProjects[0]) => {
+    // Get purchase orders for the project
+    return mockPurchaseOrders
+      .filter(order => order.projectId === project.id)
+      .filter(order => order.actualDeliveryDate)
+      .map(order => {
+        const estimatedDate = parseISO(order.estimatedDeliveryDate);
+        const actualDate = parseISO(order.actualDeliveryDate!);
+        const delay = differenceInDays(actualDate, estimatedDate);
+        
+        return {
+          name: order.supplier.length > 15 ? order.supplier.substring(0, 15) + '...' : order.supplier,
+          estimado: format(estimatedDate, 'dd/MM'),
+          real: format(actualDate, 'dd/MM'),
+          desviación: delay
+        };
+      });
+  };
+
   const allProjectsIssueData = processIssueCategoriesData();
   const currentProjectIssueData = currentProject ? processIssueCategoriesData(currentProject.id) : [];
 
@@ -317,6 +337,35 @@ const Supervision = () => {
                         </ResponsiveContainer>
                       </div>
                     </div>
+
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium">Entregas de Materiales</h3>
+                        <p className="text-sm text-gray-500">
+                          Análisis de desvíos en los tiempos de entrega de materiales.
+                        </p>
+                        <div className="h-80">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={getDeliveryPerformanceData(currentProject)}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis dataKey="name" />
+                              <YAxis />
+                              <Tooltip 
+                                formatter={(value, name) => {
+                                  if (name === 'desviación') return [`${value} días`, 'Desviación'];
+                                  return [value, name === 'estimado' ? 'Fecha estimada' : 'Fecha real'];
+                                }}
+                              />
+                              <Legend />
+                              <Bar dataKey="desviación" name="Desvío (días)">
+                                {getDeliveryPerformanceData(currentProject).map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.desviación > 0 ? "#FF5252" : "#4CAF50"} />
+                                ))}
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+
                   </div>
                 </CardContent>
               </Card>

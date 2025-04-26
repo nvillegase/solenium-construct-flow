@@ -43,14 +43,14 @@ export interface Material {
 
 export interface PurchaseOrder {
   id: string;
-  projectId: string; // Project association
-  projectName?: string; // Project name for display
+  projectIds: string[]; // Projects associated with the purchase order
+  projectNames?: string[]; // Project names for display
   materials: {
     id: string;
     materialId: string;
     materialName: string;
     quantity: number;
-    projectId: string; // Added this field
+    projectId: string; // Project association for the material
   }[];
   supplier: string;
   estimatedDeliveryDate: string;
@@ -69,6 +69,7 @@ export interface MaterialReception {
   status: 'Bueno' | 'Regular' | 'Defectuoso';
   date: string;
   observation: string;
+  photos?: string[]; // List of URLs for uploaded photos
 }
 
 export interface MaterialDelivery {
@@ -81,12 +82,20 @@ export interface MaterialDelivery {
   date: string;
 }
 
+export interface Contractor {
+  id: string;
+  name: string;
+  contactPerson: string;
+  contactEmail: string;
+  contactPhone: string;
+}
+
 export interface Activity {
   id: string;
   projectId: string; // Project association
   workQuantityId: string; // Related work quantity
   name: string;
-  contractor: string;
+  contractorId: string;
   estimatedQuantity: number;
   executedQuantity: number;
   unit: string;
@@ -115,7 +124,7 @@ export interface DailyProjection {
   date: string;
   activities: {
     activityId: string;
-    contractor: string;
+    contractorId: string;
     quantity: number;
     unit: string;
   }[];

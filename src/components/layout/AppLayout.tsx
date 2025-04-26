@@ -55,30 +55,6 @@ const AppLayout = ({ children, requiredRoles }: AppLayoutProps) => {
         />
         <main className="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-6">
           <div className="max-w-7xl mx-auto">
-            {showProjectSelector && (
-              <div className="mb-6 bg-white p-4 rounded-md shadow-sm border">
-                <div className="flex items-center space-x-4">
-                  <Label htmlFor="project-selector" className="font-medium text-gray-700">
-                    Proyecto Actual:
-                  </Label>
-                  <Select
-                    value={selectedProjectId || ""}
-                    onValueChange={setSelectedProjectId}
-                  >
-                    <SelectTrigger id="project-selector" className="w-[250px]">
-                      <SelectValue placeholder="Seleccionar proyecto" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableProjects.map((project) => (
-                        <SelectItem key={project.id} value={project.id}>
-                          {project.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
             {children}
           </div>
         </main>

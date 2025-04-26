@@ -111,7 +111,7 @@ const Construction = () => {
       description: "Actividades programadas correctamente"
     });
 
-    setProjectedActivities([]);
+    mockDailyProjections.push(newProjection);
   };
 
   const getProjectionsForDate = (date: string) => {

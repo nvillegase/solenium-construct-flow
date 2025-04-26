@@ -285,7 +285,7 @@ const Inventory = () => {
                         type="number"
                         min="1"
                         value={newReception.quantity}
-                        onChange={e => setNewReception({...newReception, quantity: parseInt(e.target.value) || 0})}
+                        onChange={e => setNewReception({...newReception, quantity: parseInt(e.target.value)})}
                       />
                       <span className="text-sm text-gray-500">
                         {newReception.materialId

@@ -10,6 +10,7 @@ import { format, differenceInDays, parseISO } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Activity, IssueCategory } from "@/lib/types";
+import MaterialShipmentProgress from "@/components/MaterialsShipmentProgress";
 
 const COLORS = [
   "#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", 
@@ -34,6 +35,73 @@ const Supervision = () => {
     { date: '03/01', p1Real: 55, p1Proyectado: 65, p2Real: 35, p2Proyectado: 45, p3Real: 75, p3Proyectado: 74, p4Real: 70, p4Proyectado: 78 },
     { date: '03/15', p1Real: 65, p1Proyectado: 75, p2Real: 40, p2Proyectado: 50, p3Real: 85, p3Proyectado: 88, p4Real: 85, p4Proyectado: 88 },
   ];
+
+  const actividadesEjemplo = [
+    {
+      nombre: "Cimentación",
+      porcentajeAvance: 95,
+      fechaComprometida: "2025-05-15",
+      materiales: [
+        {
+          nombre: "Cemento",
+          cantidadRequerida: 100,
+          cantidadDisponible: 95,
+          porcentajeAvance: 95,
+          fechaComprometida: "2025-05-10"
+        },
+        {
+          nombre: "Arena",
+          cantidadRequerida: 50,
+          cantidadDisponible: 45,
+          porcentajeAvance: 90,
+          fechaComprometida: "2025-05-12"
+        }
+      ]
+    },
+    {
+      nombre: "Estructura metálica",
+      porcentajeAvance: 45,
+      fechaComprometida: "2025-04-20",
+      materiales: [
+        {
+          nombre: "Vigas de acero",
+          cantidadRequerida: 20,
+          cantidadDisponible: 8,
+          porcentajeAvance: 40,
+          fechaComprometida: "2025-04-15"
+        },
+        {
+          nombre: "Tornillería",
+          cantidadRequerida: 1000,
+          cantidadDisponible: 500,
+          porcentajeAvance: 50,
+          fechaComprometida: "2025-04-18"
+        }
+      ]
+    },
+    {
+      nombre: "Cerramiento",
+      porcentajeAvance: 95,
+      fechaComprometida: "2025-05-15",
+      materiales: [
+        {
+          nombre: "Cemento",
+          cantidadRequerida: 100,
+          cantidadDisponible: 95,
+          porcentajeAvance: 95,
+          fechaComprometida: "2025-05-10"
+        },
+        {
+          nombre: "Arena",
+          cantidadRequerida: 50,
+          cantidadDisponible: 45,
+          porcentajeAvance: 90,
+          fechaComprometida: "2025-05-12"
+        }
+      ]
+    },
+  ];
+  
   
   const currentProject = selectedProject 
     ? mockProjects.find(p => p.id === selectedProject)
@@ -365,6 +433,20 @@ const Supervision = () => {
                           </ResponsiveContainer>
                         </div>
                       </div>
+
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-medium">Recepción de materiales</h3>
+                        <p className="text-sm text-gray-500 mb-2">
+                          Porcentaje de materiales entregados por actividad.
+                        </p>
+                        <div className="h-80 overflow-y-auto">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <MaterialShipmentProgress
+                                activities={actividadesEjemplo}
+                              />
+                          </ResponsiveContainer>
+                        </div>
+                    </div>
 
                   </div>
                 </CardContent>

@@ -7,12 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { mockActivities, mockDailyExecutions, mockDailyProjections } from "@/lib/mock-data";
+import { mockActivities, mockDailyExecutions, mockDailyProjections, mockProjects } from "@/lib/mock-data";
 import { Activity, DailyExecution, IssueCategory, DailyProjection } from "@/lib/types";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info, Plus, Save, Trash2, Edit2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const CONTRACTORS = ["CONSTRUYENDO", "ELECTROMONTES", "OSPINAS", "ELÉCTRICOS DEL CESAR"];
 const ISSUE_CATEGORIES: IssueCategory[] = [
@@ -29,7 +30,13 @@ const ISSUE_CATEGORIES: IssueCategory[] = [
 ];
 
 const Construction = () => {
-  // State for daily projection
+  const { user } = useAuth();
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  
+  const availableProjects = mockProjects.filter(project => 
+    user?.projectIds?.includes(project.id) || user?.role === "Supervisor"
+  );
+
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [projectedActivities, setProjectedActivities] = useState<DailyProjection["activities"]>([]);
   const [currentActivity, setCurrentActivity] = useState({
@@ -39,7 +46,6 @@ const Construction = () => {
     unit: ""
   });
 
-  // State for execution
   const [selectedExecutionDate, setSelectedExecutionDate] = useState<string | null>(null);
   const [executions, setExecutions] = useState<DailyExecution[]>(mockDailyExecutions);
   const [editingProjection, setEditingProjection] = useState<string | null>(null);
@@ -53,7 +59,6 @@ const Construction = () => {
   }>({});
   const { toast } = useToast();
 
-  // Handle adding a new activity to the daily projection
   const addActivityToProjection = () => {
     if (!currentActivity.activityId || !currentActivity.contractor || currentActivity.quantity <= 0) {
       toast({
@@ -73,7 +78,6 @@ const Construction = () => {
     });
   };
 
-  // Handle scheduling the day's activities
   const scheduleDay = () => {
     if (projectedActivities.length === 0) {
       toast({
@@ -84,10 +88,9 @@ const Construction = () => {
       return;
     }
 
-    // In a real app, this would be an API call
     const newProjection: DailyProjection = {
       id: `proj-${Date.now()}`,
-      projectId: "project-1", // This would come from the project context
+      projectId: selectedProjectId || "project-1",
       date: selectedDate,
       activities: projectedActivities,
       isExecutionComplete: false
@@ -98,22 +101,18 @@ const Construction = () => {
       description: "Actividades programadas correctamente"
     });
 
-    // Reset form
     setProjectedActivities([]);
   };
 
-  // Get projections for a specific date
   const getProjectionsForDate = (date: string) => {
     return mockDailyProjections.find(p => p.date === date);
   };
 
-  // Get all dates with projections
   const getDatesWithProjections = () => {
     return [...new Set(mockDailyProjections.map(p => p.date))].sort();
   };
 
   const handleUpdateProjection = (projectionId: string, activities: DailyProjection['activities']) => {
-    // In a real app, this would be an API call
     toast({
       title: "Éxito",
       description: "Programación actualizada correctamente"
@@ -131,7 +130,6 @@ const Construction = () => {
       return;
     }
 
-    // In a real app, this would be an API call
     toast({
       title: "Éxito",
       description: "Reporte de ejecución guardado correctamente"
@@ -143,416 +141,440 @@ const Construction = () => {
   return (
     <AppLayout requiredRoles={["Residente", "Supervisor"]}>
       <div className="space-y-6">
-        <h1 className="text-2xl font-semibold">Gestión de Obra</h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-semibold">Gestión de Obra</h1>
+          
+          <div className="w-[200px]">
+            <Select
+              value={selectedProjectId || ""}
+              onValueChange={setSelectedProjectId}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar proyecto" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableProjects.map(project => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
-        <Tabs defaultValue="planning">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="planning">Proyección de Actividades</TabsTrigger>
-            <TabsTrigger value="execution">Ejecución Diaria</TabsTrigger>
-          </TabsList>
+        {selectedProjectId ? (
+          <Tabs defaultValue="planning">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="planning">Proyección de Actividades</TabsTrigger>
+              <TabsTrigger value="execution">Ejecución Diaria</TabsTrigger>
+            </TabsList>
 
-          {/* Planning Tab */}
-          <TabsContent value="planning" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  Proyección para el día
-                  <Input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-auto"
-                  />
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Form to add activities */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label>Actividad</Label>
-                    <Select
-                      value={currentActivity.activityId}
-                      onValueChange={(value) => {
-                        const activity = mockActivities.find(a => a.id === value);
-                        setCurrentActivity({
-                          ...currentActivity,
-                          activityId: value,
-                          unit: activity?.unit || ""
-                        });
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar actividad" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {mockActivities.map(activity => (
-                          <SelectItem key={activity.id} value={activity.id}>
-                            {activity.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Contratista</Label>
-                    <Select
-                      value={currentActivity.contractor}
-                      onValueChange={(value) => setCurrentActivity({...currentActivity, contractor: value})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar contratista" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CONTRACTORS.map(contractor => (
-                          <SelectItem key={contractor} value={contractor}>
-                            {contractor}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Cantidad</Label>
+            <TabsContent value="planning" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    Proyección para el día
                     <Input
-                      type="number"
-                      min="0"
-                      value={currentActivity.quantity || ""}
-                      onChange={(e) => setCurrentActivity({
-                        ...currentActivity,
-                        quantity: parseFloat(e.target.value) || 0
-                      })}
+                      type="date"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                      className="w-auto"
                     />
-                  </div>
-
-                  <div className="flex items-end">
-                    <Button
-                      onClick={addActivityToProjection}
-                      className="w-full"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Agregar Actividad
-                    </Button>
-                  </div>
-                </div>
-
-                {/* List of added activities */}
-                {projectedActivities.length > 0 && (
-                  <div className="border rounded-md p-4">
-                    <h3 className="font-medium mb-4">Actividades a programar:</h3>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="space-y-2">
-                      {projectedActivities.map((activity, index) => {
-                        const activityDetails = mockActivities.find(a => a.id === activity.activityId);
-                        return (
-                          <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                            <div>
-                              <span className="font-medium">{activityDetails?.name}</span>
-                              <span className="text-gray-500 ml-2">
-                                ({activity.quantity} {activity.unit} - {activity.contractor})
-                              </span>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                const newActivities = [...projectedActivities];
-                                newActivities.splice(index, 1);
-                                setProjectedActivities(newActivities);
-                              }}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        );
-                      })}
+                      <Label>Actividad</Label>
+                      <Select
+                        value={currentActivity.activityId}
+                        onValueChange={(value) => {
+                          const activity = mockActivities.find(a => a.id === value);
+                          setCurrentActivity({
+                            ...currentActivity,
+                            activityId: value,
+                            unit: activity?.unit || ""
+                          });
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar actividad" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {mockActivities.map(activity => (
+                            <SelectItem key={activity.id} value={activity.id}>
+                              {activity.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Contratista</Label>
+                      <Select
+                        value={currentActivity.contractor}
+                        onValueChange={(value) => setCurrentActivity({...currentActivity, contractor: value})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar contratista" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CONTRACTORS.map(contractor => (
+                            <SelectItem key={contractor} value={contractor}>
+                              {contractor}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Cantidad</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={currentActivity.quantity || ""}
+                        onChange={(e) => setCurrentActivity({
+                          ...currentActivity,
+                          quantity: parseFloat(e.target.value) || 0
+                        })}
+                      />
+                    </div>
+
+                    <div className="flex items-end">
+                      <Button
+                        onClick={addActivityToProjection}
+                        className="w-full"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Agregar Actividad
+                      </Button>
                     </div>
                   </div>
-                )}
-              </CardContent>
-              <CardFooter className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setProjectedActivities([])}
-                >
-                  Limpiar
-                </Button>
-                <Button 
-                  onClick={scheduleDay}
-                  disabled={projectedActivities.length === 0}
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  Programar Día
-                </Button>
-              </CardFooter>
-            </Card>
 
-            {/* Show scheduled activities by date */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Programación por Fecha</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {getDatesWithProjections().map(date => {
-                    const projection = getProjectionsForDate(date);
-                    const isEditing = editingProjection === projection?.id;
-
-                    return (
-                      <div key={date} className="border rounded-md p-4">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-medium">
-                            {format(new Date(date), 'dd/MM/yyyy')}
-                          </h3>
-                          <div className="flex items-center gap-2">
-                            {!projection?.isExecutionComplete && (
-                              <Alert className="bg-yellow-50 text-yellow-800 p-2">
-                                <Info className="w-4 h-4" />
-                                <AlertDescription>
-                                  Pendiente reporte de ejecución
-                                </AlertDescription>
-                              </Alert>
-                            )}
-                            {!isEditing ? (
+                  {projectedActivities.length > 0 && (
+                    <div className="border rounded-md p-4">
+                      <h3 className="font-medium mb-4">Actividades a programar:</h3>
+                      <div className="space-y-2">
+                        {projectedActivities.map((activity, index) => {
+                          const activityDetails = mockActivities.find(a => a.id === activity.activityId);
+                          return (
+                            <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                              <div>
+                                <span className="font-medium">{activityDetails?.name}</span>
+                                <span className="text-gray-500 ml-2">
+                                  ({activity.quantity} {activity.unit} - {activity.contractor})
+                                </span>
+                              </div>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => setEditingProjection(projection?.id)}
+                                onClick={() => {
+                                  const newActivities = [...projectedActivities];
+                                  newActivities.splice(index, 1);
+                                  setProjectedActivities(newActivities);
+                                }}
                               >
-                                <Edit2 className="w-4 h-4" />
+                                <Trash2 className="w-4 h-4" />
                               </Button>
-                            ) : (
-                              <Button
-                                size="sm"
-                                onClick={() => handleUpdateProjection(projection?.id, projection?.activities)}
-                              >
-                                <Save className="w-4 h-4 mr-2" />
-                                Guardar
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          {projection?.activities.map((activity, index) => {
-                            const activityDetails = mockActivities.find(a => a.id === activity.activityId);
-                            return (
-                              <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                                <div className="flex-1 grid grid-cols-3 gap-4">
-                                  <span className="font-medium">{activityDetails?.name}</span>
-                                  {isEditing ? (
-                                    <>
-                                      <Select
-                                        value={activity.contractor}
-                                        onValueChange={(value) => {
-                                          const newActivities = [...projection.activities];
-                                          newActivities[index].contractor = value;
-                                          // Update projection activities
-                                        }}
-                                      >
-                                        <SelectTrigger>
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {CONTRACTORS.map(c => (
-                                            <SelectItem key={c} value={c}>
-                                              {c}
-                                            </SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                      <Input
-                                        type="number"
-                                        value={activity.quantity}
-                                        onChange={(e) => {
-                                          const newActivities = [...projection.activities];
-                                          newActivities[index].quantity = Number(e.target.value);
-                                          // Update projection activities
-                                        }}
-                                      />
-                                    </>
-                                  ) : (
-                                    <>
-                                      <span>{activity.contractor}</span>
-                                      <span>{activity.quantity} {activity.unit}</span>
-                                    </>
-                                  )}
-                                </div>
-                                {isEditing && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      const newActivities = projection.activities.filter((_, i) => i !== index);
-                                      // Update projection activities
-                                    }}
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Execution Tab */}
-          <TabsContent value="execution">
-            <Card>
-              <CardHeader>
-                <CardTitle>Registro de Ejecución Diaria</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <Label>Fecha de Ejecución</Label>
-                    <Select
-                      value={selectedExecutionDate || ""}
-                      onValueChange={setSelectedExecutionDate}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar fecha" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getDatesWithProjections().map(date => {
-                          const projection = getProjectionsForDate(date);
-                          return (
-                            <SelectItem key={date} value={date}>
-                              {format(new Date(date), 'dd/MM/yyyy')}
-                              {!projection?.isExecutionComplete && " (Pendiente)"}
-                            </SelectItem>
+                            </div>
                           );
                         })}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setProjectedActivities([])}
+                  >
+                    Limpiar
+                  </Button>
+                  <Button 
+                    onClick={scheduleDay}
+                    disabled={projectedActivities.length === 0}
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Programar Día
+                  </Button>
+                </CardFooter>
+              </Card>
 
-                  {selectedExecutionDate && (
-                    <div className="space-y-4">
-                      <h3 className="font-medium">Actividades Programadas:</h3>
-                      {getProjectionsForDate(selectedExecutionDate)?.activities.map((activity, index) => {
-                        const activityDetails = mockActivities.find(a => a.id === activity.activityId);
-                        const executionDetails = executionData[activity.activityId] || {
-                          quantity: 0,
-                          notes: '',
-                          issueCategory: undefined,
-                          issueNotes: ''
-                        };
+              <Card>
+                <CardHeader>
+                  <CardTitle>Programación por Fecha</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {getDatesWithProjections().map(date => {
+                      const projection = getProjectionsForDate(date);
+                      const isEditing = editingProjection === projection?.id;
 
-                        return (
-                          <Card key={index}>
-                            <CardContent className="pt-6">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                  <h4 className="font-medium">{activityDetails?.name}</h4>
-                                  <p className="text-sm text-gray-500">
-                                    Contratista: {activity.contractor}
-                                  </p>
-                                  <p className="text-sm text-gray-500">
-                                    Cantidad Programada: {activity.quantity} {activity.unit}
-                                  </p>
-                                </div>
-                                <div className="space-y-4">
-                                  <div>
-                                    <Label>Cantidad Ejecutada</Label>
-                                    <Input
-                                      type="number"
-                                      min="0"
-                                      value={executionDetails.quantity}
-                                      onChange={(e) => {
-                                        setExecutionData({
-                                          ...executionData,
-                                          [activity.activityId]: {
-                                            ...executionDetails,
-                                            quantity: Number(e.target.value)
-                                          }
-                                        });
-                                      }}
-                                    />
+                      return (
+                        <div key={date} className="border rounded-md p-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-medium">
+                              {format(new Date(date), 'dd/MM/yyyy')}
+                            </h3>
+                            <div className="flex items-center gap-2">
+                              {!projection?.isExecutionComplete && (
+                                <Alert className="bg-yellow-50 text-yellow-800 p-2">
+                                  <Info className="w-4 h-4" />
+                                  <AlertDescription>
+                                    Pendiente reporte de ejecución
+                                  </AlertDescription>
+                                </Alert>
+                              )}
+                              {!isEditing ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setEditingProjection(projection?.id)}
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleUpdateProjection(projection?.id, projection?.activities)}
+                                >
+                                  <Save className="w-4 h-4 mr-2" />
+                                  Guardar
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            {projection?.activities.map((activity, index) => {
+                              const activityDetails = mockActivities.find(a => a.id === activity.activityId);
+                              return (
+                                <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                                  <div className="flex-1 grid grid-cols-3 gap-4">
+                                    <span className="font-medium">{activityDetails?.name}</span>
+                                    {isEditing ? (
+                                      <>
+                                        <Select
+                                          value={activity.contractor}
+                                          onValueChange={(value) => {
+                                            const newActivities = [...projection.activities];
+                                            newActivities[index].contractor = value;
+                                          }}
+                                        >
+                                          <SelectTrigger>
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {CONTRACTORS.map(c => (
+                                              <SelectItem key={c} value={c}>
+                                                {c}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                        <Input
+                                          type="number"
+                                          value={activity.quantity}
+                                          onChange={(e) => {
+                                            const newActivities = [...projection.activities];
+                                            newActivities[index].quantity = Number(e.target.value);
+                                          }}
+                                        />
+                                      </>
+                                    ) : (
+                                      <>
+                                        <span>{activity.contractor}</span>
+                                        <span>{activity.quantity} {activity.unit}</span>
+                                      </>
+                                    )}
                                   </div>
-                                  <div>
-                                    <Label>Observaciones</Label>
-                                    <Textarea
-                                      rows={2}
-                                      value={executionDetails.notes}
-                                      onChange={(e) => {
-                                        setExecutionData({
-                                          ...executionData,
-                                          [activity.activityId]: {
-                                            ...executionDetails,
-                                            notes: e.target.value
-                                          }
-                                        });
-                                      }}
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label>Categoría de Novedad</Label>
-                                    <Select
-                                      value={executionDetails.issueCategory}
-                                      onValueChange={(value: IssueCategory) => {
-                                        setExecutionData({
-                                          ...executionData,
-                                          [activity.activityId]: {
-                                            ...executionDetails,
-                                            issueCategory: value
-                                          }
-                                        });
+                                  {isEditing && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        const newActivities = projection.activities.filter((_, i) => i !== index);
                                       }}
                                     >
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Seleccionar categoría" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {ISSUE_CATEGORIES.map(category => (
-                                          <SelectItem key={category} value={category}>
-                                            {category}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="execution">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Registro de Ejecución Diaria</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <Label>Fecha de Ejecución</Label>
+                      <Select
+                        value={selectedExecutionDate || ""}
+                        onValueChange={setSelectedExecutionDate}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar fecha" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getDatesWithProjections().map(date => {
+                            const projection = getProjectionsForDate(date);
+                            return (
+                              <SelectItem key={date} value={date}>
+                                {format(new Date(date), 'dd/MM/yyyy')}
+                                {!projection?.isExecutionComplete && " (Pendiente)"}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {selectedExecutionDate && (
+                      <div className="space-y-4">
+                        <h3 className="font-medium">Actividades Programadas:</h3>
+                        {getProjectionsForDate(selectedExecutionDate)?.activities.map((activity, index) => {
+                          const activityDetails = mockActivities.find(a => a.id === activity.activityId);
+                          const executionDetails = executionData[activity.activityId] || {
+                            quantity: 0,
+                            notes: '',
+                            issueCategory: undefined,
+                            issueNotes: ''
+                          };
+
+                          return (
+                            <Card key={index}>
+                              <CardContent className="pt-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <h4 className="font-medium">{activityDetails?.name}</h4>
+                                    <p className="text-sm text-gray-500">
+                                      Contratista: {activity.contractor}
+                                    </p>
+                                    <p className="text-sm text-gray-500">
+                                      Cantidad Programada: {activity.quantity} {activity.unit}
+                                    </p>
                                   </div>
-                                  {executionDetails.issueCategory === 'Otros' && (
+                                  <div className="space-y-4">
                                     <div>
-                                      <Label>Descripción de la Novedad</Label>
+                                      <Label>Cantidad Ejecutada</Label>
                                       <Input
-                                        type="text"
-                                        value={executionDetails.issueNotes}
+                                        type="number"
+                                        min="0"
+                                        value={executionDetails.quantity}
                                         onChange={(e) => {
                                           setExecutionData({
                                             ...executionData,
                                             [activity.activityId]: {
                                               ...executionDetails,
-                                              issueNotes: e.target.value
+                                              quantity: Number(e.target.value)
                                             }
                                           });
                                         }}
                                       />
                                     </div>
-                                  )}
+                                    <div>
+                                      <Label>Observaciones</Label>
+                                      <Textarea
+                                        rows={2}
+                                        value={executionDetails.notes}
+                                        onChange={(e) => {
+                                          setExecutionData({
+                                            ...executionData,
+                                            [activity.activityId]: {
+                                              ...executionDetails,
+                                              notes: e.target.value
+                                            }
+                                          });
+                                        }}
+                                      />
+                                    </div>
+                                    <div>
+                                      <Label>Categoría de Novedad</Label>
+                                      <Select
+                                        value={executionDetails.issueCategory}
+                                        onValueChange={(value: IssueCategory) => {
+                                          setExecutionData({
+                                            ...executionData,
+                                            [activity.activityId]: {
+                                              ...executionDetails,
+                                              issueCategory: value
+                                            }
+                                          });
+                                        }}
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Seleccionar categoría" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {ISSUE_CATEGORIES.map(category => (
+                                            <SelectItem key={category} value={category}>
+                                              {category}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    {executionDetails.issueCategory === 'Otros' && (
+                                      <div>
+                                        <Label>Descripción de la Novedad</Label>
+                                        <Input
+                                          type="text"
+                                          value={executionDetails.issueNotes}
+                                          onChange={(e) => {
+                                            setExecutionData({
+                                              ...executionData,
+                                              [activity.activityId]: {
+                                                ...executionDetails,
+                                                issueNotes: e.target.value
+                                              }
+                                            });
+                                          }}
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
-                      <div className="flex justify-end">
-                        <Button onClick={() => handleExecutionSubmit(selectedExecutionDate)}>
-                          Guardar Reporte de Ejecución
-                        </Button>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                        <div className="flex justify-end">
+                          <Button onClick={() => handleExecutionSubmit(selectedExecutionDate)}>
+                            Guardar Reporte de Ejecución
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <Card>
+            <CardContent className="pt-6">
+              <Alert>
+                <AlertDescription>
+                  Selecciona un proyecto para comenzar.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </AppLayout>
   );

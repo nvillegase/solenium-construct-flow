@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,8 @@ const ISSUE_CATEGORIES: IssueCategory[] = [
   'Falta de especificaciones técnicas en los diseños',
   'RTB incompleto',
   'Daño de maquinaria o herramienta',
+  'Sin novedad',
+  'Programación hincadora',
   'Otros'
 ];
 
@@ -37,11 +40,18 @@ const Construction = () => {
     user?.projectIds?.includes(project.id) || user?.role === "Supervisor"
   );
 
+  // Initialize selected project from user's first project (if available)
+  useState(() => {
+    if (availableProjects.length > 0 && !selectedProjectId) {
+      setSelectedProjectId(availableProjects[0].id);
+    }
+  });
+
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [projectedActivities, setProjectedActivities] = useState<DailyProjection["activities"]>([]);
   const [currentActivity, setCurrentActivity] = useState({
     activityId: "",
-    contractor: "",
+    contractorId: "", // Changed from contractor to contractorId for type consistency
     quantity: 0,
     unit: ""
   });
@@ -60,7 +70,7 @@ const Construction = () => {
   const { toast } = useToast();
 
   const addActivityToProjection = () => {
-    if (!currentActivity.activityId || !currentActivity.contractor || currentActivity.quantity <= 0) {
+    if (!currentActivity.activityId || !currentActivity.contractorId || currentActivity.quantity <= 0) {
       toast({
         title: "Error",
         description: "Todos los campos son requeridos",
@@ -72,7 +82,7 @@ const Construction = () => {
     setProjectedActivities([...projectedActivities, currentActivity]);
     setCurrentActivity({
       activityId: "",
-      contractor: "",
+      contractorId: "",
       quantity: 0,
       unit: ""
     });
@@ -214,8 +224,8 @@ const Construction = () => {
                     <div className="space-y-2">
                       <Label>Contratista</Label>
                       <Select
-                        value={currentActivity.contractor}
-                        onValueChange={(value) => setCurrentActivity({...currentActivity, contractor: value})}
+                        value={currentActivity.contractorId}
+                        onValueChange={(value) => setCurrentActivity({...currentActivity, contractorId: value})}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar contratista" />
@@ -265,7 +275,7 @@ const Construction = () => {
                               <div>
                                 <span className="font-medium">{activityDetails?.name}</span>
                                 <span className="text-gray-500 ml-2">
-                                  ({activity.quantity} {activity.unit} - {activity.contractor})
+                                  ({activity.quantity} {activity.unit} - {activity.contractorId})
                                 </span>
                               </div>
                               <Button
@@ -357,10 +367,10 @@ const Construction = () => {
                                     {isEditing ? (
                                       <>
                                         <Select
-                                          value={activity.contractor}
+                                          value={activity.contractorId}
                                           onValueChange={(value) => {
                                             const newActivities = [...projection.activities];
-                                            newActivities[index].contractor = value;
+                                            newActivities[index].contractorId = value;
                                           }}
                                         >
                                           <SelectTrigger>
@@ -385,7 +395,7 @@ const Construction = () => {
                                       </>
                                     ) : (
                                       <>
-                                        <span>{activity.contractor}</span>
+                                        <span>{activity.contractorId}</span>
                                         <span>{activity.quantity} {activity.unit}</span>
                                       </>
                                     )}
@@ -462,7 +472,7 @@ const Construction = () => {
                                   <div>
                                     <h4 className="font-medium">{activityDetails?.name}</h4>
                                     <p className="text-sm text-gray-500">
-                                      Contratista: {activity.contractor}
+                                      Contratista: {activity.contractorId}
                                     </p>
                                     <p className="text-sm text-gray-500">
                                       Cantidad Programada: {activity.quantity} {activity.unit}

@@ -31,10 +31,10 @@ const Supply = () => {
   const filterOrdersByProject = (orders: PurchaseOrder[], projectId: string | "all") => {
     if (projectId === "all") return orders;
     
-    // Check if any material in the order belongs to the selected project
+    // Check if the order is related to the selected project
     return orders.filter(order => {
-      // Main project check
-      if (order.projectId === projectId) return true;
+      // Check if project is in projectIds array
+      if (order.projectIds.includes(projectId)) return true;
       
       // Check individual materials if they have projectId
       const hasMaterialForProject = order.materials.some(mat => 
@@ -140,7 +140,12 @@ const Supply = () => {
                             )}
                             <div className="flex justify-between text-sm">
                               <span className="text-gray-500">Proyecto principal:</span>
-                              <span className="font-medium">{order.projectName || "No especificado"}</span>
+                              <span className="font-medium">
+                                {order.projectNames ? order.projectNames[0] : 
+                                 (order.projectIds?.length > 0 ? 
+                                  mockProjects.find(p => p.id === order.projectIds[0])?.name || "No especificado" 
+                                  : "No especificado")}
+                              </span>
                             </div>
                           </div>
                           
@@ -153,7 +158,7 @@ const Supply = () => {
                                 <li key={material.id} className="flex justify-between">
                                   <div className="flex-1">
                                     <span>{material.materialName}</span>
-                                    {'projectId' in material && material.projectId !== order.projectId && (
+                                    {'projectId' in material && material.projectId !== order.projectIds[0] && (
                                       <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
                                         {mockProjects.find(p => p.id === material.projectId)?.name || 'Otro proyecto'}
                                       </span>

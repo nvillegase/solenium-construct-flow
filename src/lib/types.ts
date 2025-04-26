@@ -141,6 +141,6 @@ export type IssueCategory =
   | 'Falta de especificaciones técnicas en los diseños'
   | 'RTB incompleto'
   | 'Daño de maquinaria o herramienta'
-  | 'Sin novedad'
+  | 'Sin novedad'  // This was missing in the IssueCategory type
   | 'Programación hincadora'
   | 'Otros';

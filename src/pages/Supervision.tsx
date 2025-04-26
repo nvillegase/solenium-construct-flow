@@ -111,7 +111,7 @@ const Supervision = () => {
   const getDeliveryPerformanceData = (project = mockProjects[0]) => {
     // Get purchase orders for the project
     return mockPurchaseOrders
-      .filter(order => order.projectId === project.id)
+      .filter(order => order.projectIds.includes(project.id))
       .filter(order => order.actualDeliveryDate)
       .map(order => {
         const estimatedDate = parseISO(order.estimatedDeliveryDate);

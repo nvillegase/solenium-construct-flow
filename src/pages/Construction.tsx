@@ -15,7 +15,7 @@ import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info, Plus, Save, Trash2, Edit2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-
+ 
 const CONTRACTORS = ["CONSTRUYENDO", "ELECTROMONTES", "OSPINAS", "ELÉCTRICOS DEL CESAR"];
 const ISSUE_CATEGORIES: IssueCategory[] = [
   'Lluvia moderada',

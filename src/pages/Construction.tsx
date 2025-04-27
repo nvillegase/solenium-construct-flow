@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -40,7 +39,6 @@ const Construction = () => {
     user?.projectIds?.includes(project.id) || user?.role === "Supervisor"
   );
 
-  // Initialize selected project from user's first project (if available)
   useState(() => {
     if (availableProjects.length > 0 && !selectedProjectId) {
       setSelectedProjectId(availableProjects[0].id);
@@ -51,7 +49,7 @@ const Construction = () => {
   const [projectedActivities, setProjectedActivities] = useState<DailyProjection["activities"]>([]);
   const [currentActivity, setCurrentActivity] = useState({
     activityId: "",
-    contractorId: "", // Changed from contractor to contractorId for type consistency
+    contractorId: "",
     quantity: 0,
     unit: ""
   });
@@ -65,9 +63,9 @@ const Construction = () => {
       notes: string;
       issueCategory?: IssueCategory;
       issueNotes?: string;
+      photos?: string[];
     };
   }>({});
-  const { toast } = useToast();
 
   const addActivityToProjection = () => {
     if (!currentActivity.activityId || !currentActivity.contractorId || currentActivity.quantity <= 0) {
@@ -146,6 +144,20 @@ const Construction = () => {
     });
 
     setExecutionData({});
+  };
+
+  const handleFileChange = (activityId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const fileUrls = Array.from(e.target.files).map(file => URL.createObjectURL(file));
+      
+      setExecutionData(prev => ({
+        ...prev,
+        [activityId]: {
+          ...prev[activityId],
+          photos: fileUrls
+        }
+      }));
+    }
   };
 
   return (
@@ -462,7 +474,8 @@ const Construction = () => {
                             quantity: 0,
                             notes: '',
                             issueCategory: undefined,
-                            issueNotes: ''
+                            issueNotes: '',
+                            photos: []
                           };
 
                           return (
@@ -557,6 +570,22 @@ const Construction = () => {
                                       </div>
                                     )}
                                   </div>
+                                </div>
+                                <div className="space-y-2 mt-4">
+                                  <Label htmlFor={`photos-${activity.activityId}`}>Fotos de la actividad</Label>
+                                  <Input
+                                    id={`photos-${activity.activityId}`}
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={(e) => handleFileChange(activity.activityId, e)}
+                                    className="cursor-pointer file:cursor-pointer"
+                                  />
+                                  {executionDetails.photos && executionDetails.photos.length > 0 && (
+                                    <p className="text-sm text-gray-500 mt-1">
+                                      {executionDetails.photos.length} {executionDetails.photos.length === 1 ? "archivo seleccionado" : "archivos seleccionados"}
+                                    </p>
+                                  )}
                                 </div>
                               </CardContent>
                             </Card>

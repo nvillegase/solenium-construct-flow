@@ -666,18 +666,21 @@ export type Database = {
       }
       work_quantity_catalog: {
         Row: {
+          category: string | null
           created_at: string | null
           description: string
           id: string
           unit: string
         }
         Insert: {
+          category?: string | null
           created_at?: string | null
           description: string
           id?: string
           unit: string
         }
         Update: {
+          category?: string | null
           created_at?: string | null
           description?: string
           id?: string

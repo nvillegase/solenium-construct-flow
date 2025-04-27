@@ -18,22 +18,22 @@ export interface Project {
   expectedEndDate: string;
   status: 'Planificación' | 'En Ejecución' | 'Pausado' | 'Completado' | 'Cancelado';
   progress: number;
-  projectedProgress: number; // Added this field
+  projectedProgress: number;
 }
 
 export interface WorkQuantity {
   id: string;
-  projectId: string; // Project association
+  projectId: string;
   description: string;
   unit: string;
   quantity: number;
-  expectedExecutionDate?: string; // New field for expected execution date
-  materialIds?: string[]; // Materials required for this work quantity
+  expectedExecutionDate?: string;
+  materialIds?: string[];
 }
 
 export interface Material {
   id: string;
-  projectId: string; // Project association
+  projectId: string;
   name: string;
   unit: string;
   estimatedQuantity: number;
@@ -43,14 +43,14 @@ export interface Material {
 
 export interface PurchaseOrder {
   id: string;
-  projectIds: string[]; // Projects associated with the purchase order
-  projectNames?: string[]; // Project names for display
+  projectIds: string[];
+  projectNames?: string[];
   materials: {
     id: string;
     materialId: string;
     materialName: string;
     quantity: number;
-    projectId: string; // Project association for the material
+    projectId: string;
   }[];
   supplier: string;
   estimatedDeliveryDate: string;
@@ -61,7 +61,7 @@ export interface PurchaseOrder {
 
 export interface MaterialReception {
   id: string;
-  projectId: string; // Project association
+  projectId: string;
   orderId: string;
   materialId: string;
   materialName: string;
@@ -69,12 +69,12 @@ export interface MaterialReception {
   status: 'Bueno' | 'Regular' | 'Defectuoso';
   date: string;
   observation: string;
-  photos?: string[]; // List of URLs for uploaded photos
+  photos?: string[];
 }
 
 export interface MaterialDelivery {
   id: string;
-  projectId: string; // Project association
+  projectId: string;
   materialId: string;
   materialName: string;
   receivedBy: string;
@@ -92,30 +92,31 @@ export interface Contractor {
 
 export interface Activity {
   id: string;
-  projectId: string; // Project association
-  workQuantityId: string; // Related work quantity
+  projectId: string;
+  workQuantityId: string;
   name: string;
   contractorId: string;
   estimatedQuantity: number;
   executedQuantity: number;
   unit: string;
   date: string;
-  expectedExecutionDate?: string; // From WorkQuantity
+  expectedExecutionDate?: string;
   notes?: string;
   progress: number;
-  materialsRequired?: string[]; // IDs of required materials
+  materialsRequired?: string[];
 }
 
 export interface DailyExecution {
   id: string;
-  projectId: string; // Project association
+  projectId: string;
   activityId: string;
   activityName: string;
   executedQuantity: number;
   date: string;
   notes?: string;
-  issueCategory?: IssueCategory; // New field for issue categorization
-  issueOtherDescription?: string; // For "Other" category description
+  issueCategory?: IssueCategory;
+  issueOtherDescription?: string;
+  photos?: string[]; // Added field for photos
 }
 
 export interface DailyProjection {
@@ -141,6 +142,6 @@ export type IssueCategory =
   | 'Falta de especificaciones técnicas en los diseños'
   | 'RTB incompleto'
   | 'Daño de maquinaria o herramienta'
-  | 'Sin novedad'  // This was missing in the IssueCategory type
+  | 'Sin novedad'
   | 'Programación hincadora'
   | 'Otros';

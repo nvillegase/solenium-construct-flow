@@ -1,5 +1,4 @@
-
-import { ReactNode, useState, useEffect } from "react";
+import React, { ReactNode, useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
@@ -65,10 +64,22 @@ const AppLayout = ({ children, requiredRoles }: AppLayoutProps) => {
         }
         
         if (data) {
-          setProjects(data as Project[]);
+          // Map Supabase data to Project type to ensure type compatibility
+          const mappedProjects: Project[] = data.map(project => ({
+            id: project.id,
+            name: project.name,
+            location: project.location,
+            startDate: project.start_date,
+            expectedEndDate: project.expected_end_date,
+            status: project.status,
+            progress: project.progress,
+            projectedProgress: project.projected_progress
+          }));
+
+          setProjects(mappedProjects);
           // Set default project if none selected
-          if (data.length > 0 && !selectedProjectId) {
-            setSelectedProjectId(data[0].id);
+          if (mappedProjects.length > 0 && !selectedProjectId) {
+            setSelectedProjectId(mappedProjects[0].id);
           }
         }
       } catch (error) {

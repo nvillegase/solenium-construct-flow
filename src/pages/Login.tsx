@@ -7,25 +7,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { mockUsers } from "@/lib/mock-data";
+import { Loader2 } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, isLoading } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     
     try {
       const success = await login(email, password);
       if (success) {
         navigate("/");
       }
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error("Login error:", error);
     }
   };
 
@@ -62,6 +61,7 @@ const Login = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="usuario@solenium.co"
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
@@ -73,6 +73,7 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
+                  disabled={isLoading}
                 />
               </div>
               
@@ -87,6 +88,7 @@ const Login = () => {
                       type="button"
                       className="text-xs text-left text-solenium-blue hover:underline"
                       onClick={() => setEmail(user.email)}
+                      disabled={isLoading}
                     >
                       {user.email} ({user.role})
                     </button>
@@ -101,9 +103,14 @@ const Login = () => {
               <Button
                 type="submit"
                 className="w-full bg-solenium-blue hover:bg-blue-600"
-                disabled={loading}
+                disabled={isLoading}
               >
-                {loading ? "Cargando..." : "Iniciar sesión"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                    Cargando...
+                  </>
+                ) : "Iniciar sesión"}
               </Button>
             </CardFooter>
           </form>

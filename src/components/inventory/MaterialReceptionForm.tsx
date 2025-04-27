@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,8 +21,10 @@ const MaterialReceptionForm = ({ onSubmit }: MaterialReceptionFormProps) => {
     quantity: 0,
     status: "Bueno",
     date: new Date().toISOString().split('T')[0],
-    observation: ""
+    observation: "",
+    photos: [] as string[]
   });
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
 
   const resetForm = () => {
     setNewReception({
@@ -32,8 +33,22 @@ const MaterialReceptionForm = ({ onSubmit }: MaterialReceptionFormProps) => {
       quantity: 0,
       status: "Bueno",
       date: new Date().toISOString().split('T')[0],
-      observation: ""
+      observation: "",
+      photos: []
     });
+    setSelectedFiles(null);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFiles(e.target.files);
+      
+      const fileNames = Array.from(e.target.files).map(file => URL.createObjectURL(file));
+      setNewReception(prev => ({
+        ...prev,
+        photos: fileNames
+      }));
+    }
   };
 
   const createReception = () => {
@@ -77,7 +92,8 @@ const MaterialReceptionForm = ({ onSubmit }: MaterialReceptionFormProps) => {
       quantity: newReception.quantity,
       status: newReception.status as "Bueno" | "Regular" | "Defectuoso",
       date: newReception.date,
-      observation: newReception.observation
+      observation: newReception.observation,
+      photos: newReception.photos
     };
     
     onSubmit(newReceptionRecord);
@@ -206,6 +222,23 @@ const MaterialReceptionForm = ({ onSubmit }: MaterialReceptionFormProps) => {
             onChange={e => setNewReception({...newReception, observation: e.target.value})}
           />
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="photos">Fotos del material</Label>
+          <Input
+            id="photos"
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleFileChange}
+            className="cursor-pointer file:cursor-pointer"
+          />
+          {selectedFiles && selectedFiles.length > 0 && (
+            <p className="text-sm text-gray-500 mt-1">
+              {selectedFiles.length} {selectedFiles.length === 1 ? "archivo seleccionado" : "archivos seleccionados"}
+            </p>
+          )}
+        </div>
       </CardContent>
       <CardFooter className="flex justify-end space-x-2">
         <Button variant="outline" onClick={resetForm}>
@@ -220,4 +253,3 @@ const MaterialReceptionForm = ({ onSubmit }: MaterialReceptionFormProps) => {
 };
 
 export default MaterialReceptionForm;
-

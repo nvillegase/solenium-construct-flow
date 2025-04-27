@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -10,12 +9,13 @@ import { mockWorkQuantities as initialWorkQuantities, mockMaterials as initialMa
 import { WorkQuantity, Material, Project } from "@/lib/types";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProjects } from "@/contexts/ProjectContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Design = () => {
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const { projects, selectedProjectId, setSelectedProjectId, isLoading } = useProjects();
   const [workQuantities, setWorkQuantities] = useState<WorkQuantity[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [editingQuantity, setEditingQuantity] = useState<string | null>(null);
@@ -30,9 +30,9 @@ const Design = () => {
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   
   // Get available projects for current user
-  const availableProjects = mockProjects.filter(project => 
-    user?.projectIds?.includes(project.id) || user?.role === "Supervisor"
-  );
+  // const availableProjects = mockProjects.filter(project => 
+  //   user?.projectIds?.includes(project.id) || user?.role === "Supervisor"
+  // );
   
   // Filter work quantities and materials by selected project
   useEffect(() => {
@@ -221,7 +221,7 @@ const Design = () => {
   };
   
   // Get current project details
-  const currentProject = mockProjects.find(p => p.id === selectedProjectId);
+  const currentProject = projects.find(p => p.id === selectedProjectId);
   
   return (
     <AppLayout requiredRoles={["Diseñador", "Supervisor"]}>
@@ -231,21 +231,25 @@ const Design = () => {
           
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">Proyecto actual:</span>
-            <Select
-              value={selectedProjectId}
-              onValueChange={setSelectedProjectId}
-            >
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Seleccionar proyecto" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableProjects.map(project => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {isLoading ? (
+              <div className="w-[200px] h-10 bg-gray-100 animate-pulse rounded"></div>
+            ) : (
+              <Select
+                value={selectedProjectId || ""}
+                onValueChange={setSelectedProjectId}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Seleccionar proyecto" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.map(project => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
         

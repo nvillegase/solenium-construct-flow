@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ProjectProvider } from "./contexts/ProjectContext";
 
 // Pages
 import Login from "./pages/Login";
@@ -26,17 +27,21 @@ const ProtectedRoute = ({
 }) => {
   const { isAuthenticated, hasRole, isLoading } = useAuth();
   
+  console.log("ProtectedRoute:", { isLoading, isAuthenticated, requiredRoles });
+  
   // If still loading auth state, show loading indicator
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-solenium-blue"></div>
+        <div className="ml-3">Cargando autenticación...</div>
       </div>
     );
   }
   
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
+    console.log("Not authenticated, redirecting to login");
     return <Navigate to="/login" replace />;
   }
   
@@ -44,6 +49,7 @@ const ProtectedRoute = ({
   if (requiredRoles && requiredRoles.length > 0) {
     const hasRequiredRole = requiredRoles.some(role => hasRole(role as any));
     if (!hasRequiredRole) {
+      console.log("Missing required role, redirecting to unauthorized");
       return <Navigate to="/unauthorized" replace />;
     }
   }
@@ -52,16 +58,26 @@ const ProtectedRoute = ({
   return <>{element}</>;
 };
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const AppRoutes = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  
+  console.log("AppRoutes:", { isLoading, isAuthenticated });
   
   // Handle initial routing based on authentication status
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-solenium-blue"></div>
+        <div className="ml-3">Cargando...</div>
       </div>
     );
   }
@@ -113,11 +129,13 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <ProjectProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </ProjectProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

@@ -21,11 +21,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   
-  // Check if user is already logged in on component mount
+  // Set up auth state change listener first to catch all events
   useEffect(() => {
+    console.log("Setting up auth state listener");
+    
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("Auth state changed:", event, !!session);
+        
+        if (session) {
+          // Handle user sign in or token refresh
+          // Use setTimeout to prevent potential deadlocks with Supabase client
+          setTimeout(() => {
+            fetchUserProfile(session);
+          }, 0);
+        } else {
+          // User signed out
+          setUser(null);
+          setIsLoading(false);
+        }
+      }
+    );
+    
+    // Check for existing session
     const checkSession = async () => {
       try {
-        // Get session from Supabase
+        console.log("Checking for existing session");
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -35,84 +57,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (session) {
-          // If session exists, get user profile
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          if (profileError) {
-            console.error("Error fetching profile:", profileError);
-            setIsLoading(false);
-            return;
-          }
-
-          // Get user's projects
-          const { data: userProjects, error: projectsError } = await supabase
-            .from('user_projects')
-            .select('project_id')
-            .eq('user_id', session.user.id);
-
-          if (projectsError) {
-            console.error("Error fetching user projects:", projectsError);
-          }
-
-          const projectIds = userProjects?.map(up => up.project_id) || [];
-
-          // Create user object from session and profile data
-          const userData: User = {
-            id: session.user.id,
-            name: profileData.name || session.user.email?.split('@')[0] || 'Usuario',
-            email: session.user.email || '',
-            role: profileData.role as UserRole,
-            avatar: profileData.avatar || undefined,
-            projectIds: projectIds
-          };
-
-          setUser(userData);
+          console.log("Session found, fetching user profile");
+          await fetchUserProfile(session);
+        } else {
+          console.log("No session found");
+          setIsLoading(false);
         }
       } catch (error) {
         console.error("Session check error:", error);
-      } finally {
         setIsLoading(false);
       }
     };
-
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session) {
-          // User signed in - fetch profile and projects
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-          const { data: userProjects } = await supabase
-            .from('user_projects')
-            .select('project_id')
-            .eq('user_id', session.user.id);
-
-          const projectIds = userProjects?.map(up => up.project_id) || [];
-
-          const userData: User = {
-            id: session.user.id,
-            name: profileData?.name || session.user.email?.split('@')[0] || 'Usuario',
-            email: session.user.email || '',
-            role: profileData?.role as UserRole,
-            avatar: profileData?.avatar || undefined,
-            projectIds: projectIds
-          };
-
-          setUser(userData);
-        } else {
-          // User signed out
-          setUser(null);
-        }
-      }
-    );
 
     checkSession();
 
@@ -122,20 +77,72 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Separate function to fetch user profile to avoid deadlocks
+  const fetchUserProfile = async (session: any) => {
+    try {
+      console.log("Fetching user profile for:", session.user.id);
+      
+      // Get user profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+        setIsLoading(false);
+        return;
+      }
+
+      // Get user's projects
+      const { data: userProjects, error: projectsError } = await supabase
+        .from('user_projects')
+        .select('project_id')
+        .eq('user_id', session.user.id);
+
+      if (projectsError) {
+        console.error("Error fetching user projects:", projectsError);
+      }
+
+      const projectIds = userProjects?.map(up => up.project_id) || [];
+
+      // Create user object from session and profile data
+      const userData: User = {
+        id: session.user.id,
+        name: profileData.name || session.user.email?.split('@')[0] || 'Usuario',
+        email: session.user.email || '',
+        role: profileData.role as UserRole,
+        avatar: profileData.avatar || undefined,
+        projectIds: projectIds
+      };
+
+      console.log("User data:", userData);
+      setUser(userData);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setIsLoading(true);
+      console.log("Attempting login for:", email);
       
       // For development, fallback to mock users if email matches
       if (process.env.NODE_ENV === 'development') {
         const mockUser = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
         if (mockUser) {
+          console.log("Using mock user:", mockUser.name);
           setUser(mockUser);
           localStorage.setItem("user", JSON.stringify(mockUser));
           toast({
             title: "Inicio de sesión exitoso (modo desarrollo)",
             description: `Bienvenido, ${mockUser.name}`,
           });
+          setIsLoading(false);
           return true;
         }
       }
@@ -147,22 +154,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
+        console.error("Login error:", error.message);
         toast({
           title: "Error de inicio de sesión",
           description: error.message,
           variant: "destructive",
         });
+        setIsLoading(false);
         return false;
       }
 
       if (data.user) {
+        console.log("Login successful for:", data.user.email);
         toast({
           title: "Inicio de sesión exitoso",
           description: `Bienvenido!`,
         });
+        // Note: user state will be set by the onAuthStateChange listener
         return true;
       }
       
+      setIsLoading(false);
       return false;
     } catch (error) {
       console.error("Login error:", error);
@@ -171,15 +183,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: "Ha ocurrido un error inesperado",
         variant: "destructive",
       });
-      return false;
-    } finally {
       setIsLoading(false);
+      return false;
     }
   };
 
   const logout = async () => {
     try {
       setIsLoading(true);
+      console.log("Logging out");
       await supabase.auth.signOut();
       setUser(null);
       localStorage.removeItem("user");

@@ -8,14 +8,19 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { mockMaterials, mockMaterialReceptions, mockMaterialDeliveries, mockPurchaseOrders } from "@/lib/mock-data";
-import { MaterialReception, MaterialDelivery } from "@/lib/types";
+import { MaterialReception, MaterialDelivery, Project } from "@/lib/types";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Inventory = () => {
   const [receptions, setReceptions] = useState<MaterialReception[]>(mockMaterialReceptions);
   const [deliveries, setDeliveries] = useState<MaterialDelivery[]>(mockMaterialDeliveries);
   const { toast } = useToast();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const { isAuthenticated, hasRole, user, isLoading } = useAuth();
+  const [loadingProjects, setLoadingProjects] = useState(false);
   
   // Form states
   const [newReception, setNewReception] = useState({
@@ -204,11 +209,35 @@ const Inventory = () => {
     const order = mockPurchaseOrders.find(o => o.id === orderId);
     return order?.materials.map(m => m.materialId) || [];
   };
+
+  const showProjectSelector = projects.length > 0 &&
+    ["Almacenista", "Supervisor"].includes(user?.role || "");
   
   return (
     <AppLayout requiredRoles={["Almacenista", "Supervisor"]}>
       <div className="space-y-6">
-        <h1 className="text-2xl font-semibold">Inventario de Materiales</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 className="text-2xl font-semibold">Inventario de Materiales</h1>
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+            {true && 
+              <Select
+                value={selectedProjectId || ""}
+                onValueChange={(value) => setSelectedProjectId(value)}
+                disabled={loadingProjects}
+              >
+              <SelectTrigger id="project-selector" className="w-full max-w-xs">
+                <SelectValue placeholder="Selecciona un proyecto" />
+              </SelectTrigger>
+              <SelectContent>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>}
+          </div>
+        </div>
         
         <Tabs defaultValue="reception">
           <TabsList className="grid w-full grid-cols-2">

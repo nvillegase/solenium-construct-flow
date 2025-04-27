@@ -220,52 +220,6 @@ const Design = () => {
     return workQuantities.filter(wq => !wq.materialIds || wq.materialIds.length === 0);
   };
   
-  // Render project selection or tabs based on selection state
-  if (!selectedProjectId) {
-    return (
-      <AppLayout requiredRoles={["Diseñador", "Supervisor"]}>
-        <div className="space-y-6">
-          <h1 className="text-2xl font-semibold">Diseño del Proyecto</h1>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Selecciona un Proyecto</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4 text-gray-600">Para acceder a las funcionalidades de diseño, primero debes seleccionar un proyecto:</p>
-              
-              <div className="space-y-4">
-                {availableProjects.map(project => (
-                  <div 
-                    key={project.id}
-                    className="p-4 border rounded-md hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-colors flex justify-between items-center"
-                    onClick={() => setSelectedProjectId(project.id)}
-                  >
-                    <div>
-                      <h3 className="font-medium text-lg">{project.name}</h3>
-                      <p className="text-gray-600 text-sm">
-                        {project.location} • {project.status}
-                      </p>
-                    </div>
-                    <Badge variant={project.status === 'En Ejecución' ? 'default' : 'secondary'}>
-                      {project.progress}% completado
-                    </Badge>
-                  </div>
-                ))}
-                
-                {availableProjects.length === 0 && (
-                  <div className="text-center p-6 border border-dashed rounded-md">
-                    <p className="text-gray-500">No hay proyectos asignados a tu perfil.</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </AppLayout>
-    );
-  }
-  
   // Get current project details
   const currentProject = mockProjects.find(p => p.id === selectedProjectId);
   

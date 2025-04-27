@@ -112,10 +112,6 @@ const AppLayout = ({ children, requiredRoles }: AppLayoutProps) => {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  // Check if the user has access to multiple projects and needs project selector
-  const showProjectSelector = projects.length > 0 &&
-    ["Diseñador", "Residente", "Supervisor"].includes(user?.role || "");
-
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
@@ -125,33 +121,7 @@ const AppLayout = ({ children, requiredRoles }: AppLayoutProps) => {
           setSidebarOpen={setSidebarOpen}
           user={user}
         />
-        <main className="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-6">
-          {showProjectSelector && (
-            <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="project-selector" className="whitespace-nowrap font-medium">
-                  Proyecto actual:
-                </Label>
-                <Select
-                  value={selectedProjectId || ""}
-                  onValueChange={(value) => setSelectedProjectId(value)}
-                  disabled={loadingProjects}
-                >
-                  <SelectTrigger id="project-selector" className="w-full max-w-xs">
-                    <SelectValue placeholder="Selecciona un proyecto" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-          
+        <main className="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-6">          
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

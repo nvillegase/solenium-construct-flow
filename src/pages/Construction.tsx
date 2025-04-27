@@ -1,13 +1,16 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button"; // Add Button import
 import { useAuth } from "@/contexts/AuthContext";
 import { useProjects } from "@/contexts/ProjectContext";
 import AppLayout from "@/components/layout/AppLayout";
 import { DailyProjectionComponent } from "@/components/construction/DailyProjection";
 import { DailyExecutionComponent } from "@/components/construction/DailyExecution";
 import { supabase } from "@/integrations/supabase/client";
+import { Activity, Contractor } from "@/lib/types"; // Import types
 
 export default function Construction() {
   const { user } = useAuth();
@@ -17,7 +20,7 @@ export default function Construction() {
   const [selectedTab, setSelectedTab] = React.useState("daily-projection");
 
   // Fetch contractors
-  const { data: contractors, isLoading: isLoadingContractors } = useQuery({
+  const { data: contractorsData, isLoading: isLoadingContractors } = useQuery({
     queryKey: ["contractors"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -31,7 +34,7 @@ export default function Construction() {
   });
 
   // Fetch activities for the current project
-  const { data: activities, isLoading: isLoadingActivities } = useQuery({
+  const { data: activitiesData, isLoading: isLoadingActivities } = useQuery({
     queryKey: ["activities", currentProject?.id],
     queryFn: async () => {
       if (!currentProject?.id) return [];
@@ -50,6 +53,31 @@ export default function Construction() {
     },
     enabled: !!currentProject?.id,
   });
+
+  // Transform data to match our Activity type
+  const activities: Activity[] = activitiesData?.map(item => ({
+    id: item.id,
+    projectId: item.project_id,
+    workQuantityId: item.project_work_quantity_id,
+    name: item.name,
+    contractorId: item.contractor_id,
+    contractorName: item.contractors?.name,
+    estimatedQuantity: item.estimated_quantity,
+    executedQuantity: item.executed_quantity,
+    unit: item.unit,
+    date: item.date,
+    notes: item.notes || undefined,
+    progress: item.progress,
+  })) || [];
+
+  // Transform data to match our Contractor type
+  const contractors: Contractor[] = contractorsData?.map(item => ({
+    id: item.id,
+    name: item.name,
+    contactPerson: item.contact_person,
+    contactEmail: item.contact_email,
+    contactPhone: item.contact_phone,
+  })) || [];
 
   if (!currentProject) {
     return (

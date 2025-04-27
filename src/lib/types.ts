@@ -129,6 +129,8 @@ export interface DailyProjection {
     contractorId: string;
     quantity: number;
     unit: string;
+    name?: string;
+    contractorName?: string;
   }[];
   isExecutionComplete: boolean;
 }

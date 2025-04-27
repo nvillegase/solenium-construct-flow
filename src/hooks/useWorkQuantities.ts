@@ -21,9 +21,10 @@ export const useWorkQuantities = (initialWorkQuantities: WorkQuantity[] = []) =>
     const newItem: WorkQuantity = {
       id: `wq-${Date.now()}`,
       projectId,
-      description: "Nueva actividad",
-      unit: "unidad",
-      quantity: 0
+      description: "",
+      unit: "",
+      quantity: 0,
+      catalogId: ""
     };
     setWorkQuantities([...workQuantities, newItem]);
     setEditingQuantity(newItem.id);

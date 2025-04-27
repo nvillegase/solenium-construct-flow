@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Save, Trash } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useWorkQuantityCatalog } from "@/hooks/useWorkQuantityCatalog";
+import { WorkQuantityCombobox } from "./WorkQuantityCombobox";
 
 interface WorkQuantitiesTableProps {
   workQuantities: WorkQuantity[];
@@ -29,6 +31,8 @@ export const WorkQuantitiesTable: React.FC<WorkQuantitiesTableProps> = ({
   onEdit,
   onUpdate
 }) => {
+  const { catalog, isLoading } = useWorkQuantityCatalog();
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -52,27 +56,25 @@ export const WorkQuantitiesTable: React.FC<WorkQuantitiesTableProps> = ({
             <tbody>
               {workQuantities.map(item => (
                 <tr key={item.id} className="border-b">
-                  <td className="p-2 editable-cell" onClick={() => onEdit(item.id)}>
+                  <td className="p-2" colSpan={2}>
                     {editingQuantity === item.id ? (
-                      <Input
-                        value={item.description}
-                        onChange={e => onUpdate(item.id, 'description', e.target.value)}
-                        autoFocus
-                        className="max-w-xs"
+                      <WorkQuantityCombobox
+                        items={catalog}
+                        value={item.catalogId}
+                        isLoading={isLoading}
+                        onSelect={(selected) => {
+                          onUpdate(item.id, 'description', selected.description);
+                          onUpdate(item.id, 'unit', selected.unit);
+                          onUpdate(item.id, 'catalogId', selected.id);
+                        }}
                       />
                     ) : (
-                      item.description
-                    )}
-                  </td>
-                  <td className="p-2 editable-cell" onClick={() => onEdit(item.id)}>
-                    {editingQuantity === item.id ? (
-                      <Input
-                        value={item.unit}
-                        onChange={e => onUpdate(item.id, 'unit', e.target.value)}
-                        className="max-w-xs"
-                      />
-                    ) : (
-                      item.unit
+                      <div onClick={() => onEdit(item.id)}>
+                        <div>{item.description}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Unidad: {item.unit}
+                        </div>
+                      </div>
                     )}
                   </td>
                   <td className="p-2 editable-cell" onClick={() => onEdit(item.id)}>

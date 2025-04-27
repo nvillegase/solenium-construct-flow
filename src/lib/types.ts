@@ -1,4 +1,3 @@
-
 export type UserRole = 'Diseñador' | 'Suministro' | 'Almacenista' | 'Residente' | 'Supervisor';
 
 export interface User {
@@ -148,3 +147,10 @@ export type IssueCategory =
   | 'Sin novedad'
   | 'Programación hincadora'
   | 'Otros';
+
+export interface WorkQuantityCatalog {
+  id: string;
+  description: string;
+  unit: string;
+  category?: string;
+}

@@ -12,6 +12,7 @@ import { MaterialReception, MaterialDelivery, Project } from "@/lib/types";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const Inventory = () => {
   const [receptions, setReceptions] = useState<MaterialReception[]>(mockMaterialReceptions);
@@ -22,7 +23,9 @@ const Inventory = () => {
   const { isAuthenticated, hasRole, user, isLoading } = useAuth();
   const [loadingProjects, setLoadingProjects] = useState(false);
   
-  // Form states
+  const [isRelocation, setIsRelocation] = useState(false);
+  const [destinationProjectId, setDestinationProjectId] = useState<string>("");
+
   const [newReception, setNewReception] = useState({
     orderId: "",
     materialId: "",
@@ -36,10 +39,11 @@ const Inventory = () => {
     materialId: "",
     receivedBy: "",
     quantity: 0,
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
+    isRelocation: false,
+    destinationProjectId: ""
   });
   
-  // Reset form functions
   const resetReceptionForm = () => {
     setNewReception({
       orderId: "",
@@ -56,13 +60,14 @@ const Inventory = () => {
       materialId: "",
       receivedBy: "",
       quantity: 0,
-      date: new Date().toISOString().split('T')[0]
+      date: new Date().toISOString().split('T')[0],
+      isRelocation: false,
+      destinationProjectId: ""
     });
+    setIsRelocation(false);
   };
   
-  // Create new reception
   const createReception = () => {
-    // Validation
     if (!newReception.orderId) {
       toast({
         title: "Error",
@@ -90,14 +95,13 @@ const Inventory = () => {
       return;
     }
     
-    // Create new reception record
     const selectedMaterial = mockMaterials.find(m => m.id === newReception.materialId);
     const materialName = selectedMaterial?.name || "Material desconocido";
-    const projectId = selectedMaterial?.projectId || "project-1"; // Get project ID from material or default
+    const projectId = selectedMaterial?.projectId || "project-1";
     
     const newReceptionRecord: MaterialReception = {
       id: `rec-${Date.now()}`,
-      projectId: projectId, // Add projectId here
+      projectId: projectId,
       orderId: newReception.orderId,
       materialId: newReception.materialId,
       materialName,
@@ -117,9 +121,7 @@ const Inventory = () => {
     resetReceptionForm();
   };
   
-  // Create new delivery
   const createDelivery = () => {
-    // Validation
     if (!newDelivery.materialId) {
       toast({
         title: "Error",
@@ -147,7 +149,6 @@ const Inventory = () => {
       return;
     }
     
-    // Check available quantity
     const selectedMaterial = mockMaterials.find(m => m.id === newDelivery.materialId);
     
     if (!selectedMaterial) {
@@ -178,10 +179,9 @@ const Inventory = () => {
       return;
     }
     
-    // Create new delivery record
     const newDeliveryRecord: MaterialDelivery = {
       id: `del-${Date.now()}`,
-      projectId: selectedMaterial.projectId, // Add projectId here
+      projectId: selectedMaterial.projectId,
       materialId: newDelivery.materialId,
       materialName: selectedMaterial.name,
       receivedBy: newDelivery.receivedBy,
@@ -199,12 +199,10 @@ const Inventory = () => {
     resetDeliveryForm();
   };
   
-  // Filter orders and materials that are pending or partial
   const availableOrders = mockPurchaseOrders.filter(
     order => order.status === "En Tránsito" || order.status === "Pendiente" || order.status === "Recibido Parcial"
   );
   
-  // Filter materials based on selected order
   const getFilteredMaterials = (orderId: string) => {
     const order = mockPurchaseOrders.find(o => o.id === orderId);
     return order?.materials.map(m => m.materialId) || [];
@@ -245,7 +243,6 @@ const Inventory = () => {
             <TabsTrigger value="delivery">Entrega de Materiales</TabsTrigger>
           </TabsList>
           
-          {/* Reception Tab */}
           <TabsContent value="reception" className="space-y-6">
             <Card>
               <CardHeader>
@@ -407,7 +404,6 @@ const Inventory = () => {
             </Card>
           </TabsContent>
           
-          {/* Delivery Tab */}
           <TabsContent value="delivery" className="space-y-6">
             <Card>
               <CardHeader>
@@ -426,7 +422,6 @@ const Inventory = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {mockMaterials.map(material => {
-                          // Calculate available quantity
                           const totalReceived = receptions
                             .filter(r => r.materialId === material.id)
                             .reduce((sum, r) => sum + r.quantity, 0);
@@ -484,6 +479,43 @@ const Inventory = () => {
                     />
                   </div>
                 </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="relocation"
+                    checked={isRelocation}
+                    onCheckedChange={(checked) => {
+                      setIsRelocation(checked as boolean);
+                      setNewDelivery({
+                        ...newDelivery,
+                        isRelocation: checked as boolean,
+                        destinationProjectId: checked ? newDelivery.destinationProjectId : ""
+                      });
+                    }}
+                  />
+                  <Label htmlFor="relocation">Reubicación de material</Label>
+                </div>
+
+                {isRelocation && (
+                  <div className="space-y-2">
+                    <Label htmlFor="destination-project">Proyecto</Label>
+                    <Select
+                      value={newDelivery.destinationProjectId}
+                      onValueChange={(value) => setNewDelivery({...newDelivery, destinationProjectId: value})}
+                    >
+                      <SelectTrigger id="destination-project">
+                        <SelectValue placeholder="Seleccionar proyecto destino" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {projects.map((project) => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={resetDeliveryForm}>

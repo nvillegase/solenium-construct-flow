@@ -1,117 +1,23 @@
-import React, { ReactNode, useState, useEffect } from "react";
+
+import React, { ReactNode } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import { useToast } from "@/components/ui/use-toast";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { toast } from "@/components/ui/use-toast";
 import { Project } from "@/lib/types";
-import { supabase } from "@/integrations/supabase/client";
 
 interface AppLayoutProps {
   children: ReactNode;
   requiredRoles?: string[];
 }
 
-const AppLayout = ({ children, requiredRoles }: AppLayoutProps) => {
-  const { isAuthenticated, hasRole, user, isLoading } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loadingProjects, setLoadingProjects] = useState(false);
-  const { toast } = useToast();
-
-  // Fetch available projects for current user
-  useEffect(() => {
-    const fetchProjects = async () => {
-      if (!user) return;
-      
-      setLoadingProjects(true);
-      try {
-        // Get user's assigned projects or all projects for supervisor
-        let query = supabase.from('projects').select('*');
-        
-        if (user.role !== 'Supervisor') {
-          // For non-supervisors, filter by user's assigned projects
-          const { data: userProjects } = await supabase
-            .from('user_projects')
-            .select('project_id')
-            .eq('user_id', user.id);
-            
-          const projectIds = userProjects?.map(up => up.project_id) || [];
-          
-          if (projectIds.length > 0) {
-            query = query.in('id', projectIds);
-          } else {
-            // No projects assigned
-            setProjects([]);
-            setLoadingProjects(false);
-            return;
-          }
-        }
-        
-        const { data, error } = await query;
-        
-        if (error) {
-          console.error("Error fetching projects:", error);
-          toast({
-            title: "Error",
-            description: "No se pudieron cargar los proyectos",
-            variant: "destructive",
-          });
-          return;
-        }
-        
-        if (data) {
-          // Map Supabase data to Project type to ensure type compatibility
-          const mappedProjects: Project[] = data.map(project => ({
-            id: project.id,
-            name: project.name,
-            location: project.location,
-            startDate: project.start_date,
-            expectedEndDate: project.expected_end_date,
-            status: project.status,
-            progress: project.progress,
-            projectedProgress: project.projected_progress
-          }));
-
-          setProjects(mappedProjects);
-          // Set default project if none selected
-          if (mappedProjects.length > 0 && !selectedProjectId) {
-            setSelectedProjectId(mappedProjects[0].id);
-          }
-        }
-      } catch (error) {
-        console.error("Error in fetchProjects:", error);
-      } finally {
-        setLoadingProjects(false);
-      }
-    };
-    
-    if (user) {
-      fetchProjects();
-    }
-  }, [user, toast]);
-
-  // Redirect to login if not authenticated
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-solenium-blue"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Check if user has required role
-  if (requiredRoles && requiredRoles.length > 0 && !requiredRoles.some(role => hasRole(role as any))) {
-    return <Navigate to="/unauthorized" replace />;
-  }
-
+const AppLayout = ({ children }: AppLayoutProps) => {
+  const { user } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = React.useState(true);
+  
+  // We no longer need authentication or role checks here
+  // as they're handled in the ProtectedRoute component
+  
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />

@@ -26,6 +26,7 @@ const ProtectedRoute = ({
 }) => {
   const { isAuthenticated, hasRole, isLoading } = useAuth();
   
+  // If still loading auth state, show loading indicator
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -34,10 +35,12 @@ const ProtectedRoute = ({
     );
   }
   
+  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
   
+  // Check role-based access
   if (requiredRoles && requiredRoles.length > 0) {
     const hasRequiredRole = requiredRoles.some(role => hasRole(role as any));
     if (!hasRequiredRole) {
@@ -45,15 +48,30 @@ const ProtectedRoute = ({
     }
   }
   
+  // If authenticated and has required role, render the page
   return <>{element}</>;
 };
 
 const queryClient = new QueryClient();
 
 const AppRoutes = () => {
+  const { isAuthenticated, isLoading } = useAuth();
+  
+  // Handle initial routing based on authentication status
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-solenium-blue"></div>
+      </div>
+    );
+  }
+  
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
+      <Route 
+        path="/login" 
+        element={isAuthenticated ? <Navigate to="/" replace /> : <Login />} 
+      />
       <Route path="/" element={<Navigate to="/diseno" replace />} />
       <Route path="/diseno" element={
         <ProtectedRoute 

@@ -8,12 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { DatePicker } from "@/components/ui/calendar";
+import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarIcon, PlusCircle } from "lucide-react";
+import { CalendarIcon, PlusCircle, Upload } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useProject } from "@/contexts/ProjectContext";
+import { useProjects } from "@/contexts/ProjectContext";
 import { Activity, Contractor, DailyProjection, IssueCategory } from "@/lib/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -27,11 +27,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { es } from "date-fns/locale";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export default function Construction() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { currentProject } = useProject();
+  const { projects, selectedProjectId, setSelectedProjectId } = useProjects();
+  const currentProject = projects.find(p => p.id === selectedProjectId);
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState("daily-projection");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -46,6 +48,7 @@ export default function Construction() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isViewingExecutions, setIsViewingExecutions] = useState(false);
   const [selectedExecutionDate, setSelectedExecutionDate] = useState<Date>(new Date());
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   // Fetch contractors
   const { data: contractors, isLoading: isLoadingContractors } = useQuery({
@@ -57,7 +60,15 @@ export default function Construction() {
         .order("name");
       
       if (error) throw error;
-      return data as Contractor[];
+      
+      // Map the database fields to our Contractor interface
+      return data.map(contractor => ({
+        id: contractor.id,
+        name: contractor.name,
+        contactPerson: contractor.contact_person,
+        contactEmail: contractor.contact_email,
+        contactPhone: contractor.contact_phone
+      })) as Contractor[];
     },
   });
 
@@ -172,6 +183,14 @@ export default function Construction() {
     enabled: !!currentProject?.id && !!selectedExecutionDate,
   });
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const fileArray = Array.from(files);
+      setSelectedFiles(fileArray);
+    }
+  };
+
   const handleCreateProjection = async () => {
     if (!currentProject?.id) {
       toast({
@@ -280,6 +299,21 @@ export default function Construction() {
     try {
       setIsSubmitting(true);
       
+      // Handle file uploads if any
+      const photoUrls: string[] = [];
+      
+      if (selectedFiles.length > 0) {
+        for (const file of selectedFiles) {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+          const filePath = `executions/${currentProject.id}/${fileName}`;
+          
+          // For now we'll just store the file names as placeholders
+          // In a real app with backend, you would upload these files to storage
+          photoUrls.push(filePath);
+        }
+      }
+      
       // Create the daily execution
       const { error } = await supabase
         .from("daily_executions")
@@ -290,7 +324,8 @@ export default function Construction() {
           date: format(selectedExecutionDate, "yyyy-MM-dd"),
           notes: notes,
           issue_category: issueCategory,
-          issue_other_description: issueCategory === "Otros" ? issueOtherDescription : null
+          issue_other_description: issueCategory === "Otros" ? issueOtherDescription : null,
+          photos: photoUrls.length > 0 ? photoUrls : null
         });
       
       if (error) throw error;
@@ -320,6 +355,7 @@ export default function Construction() {
       setNotes("");
       setIssueCategory(undefined);
       setIssueOtherDescription("");
+      setSelectedFiles([]);
       refetchExecutions();
     } catch (error) {
       console.error("Error creating execution:", error);
@@ -361,22 +397,11 @@ export default function Construction() {
                 <div className="flex justify-between items-center">
                   <CardTitle>Proyección Diaria</CardTitle>
                   <div className="flex gap-4">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {format(selectedDate, "PPP", { locale: es })}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <DatePicker
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={(date) => date && setSelectedDate(date)}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <DatePicker
+                      date={selectedDate}
+                      onSelect={(date) => date && setSelectedDate(date)}
+                      className="w-[240px]"
+                    />
                     
                     <Button onClick={() => setIsCreatingProjection(true)}>
                       <PlusCircle className="mr-2 h-4 w-4" />
@@ -452,7 +477,6 @@ export default function Construction() {
               </CardContent>
             </Card>
             
-            {/* Dialog for creating a new projection */}
             <Dialog open={isCreatingProjection} onOpenChange={setIsCreatingProjection}>
               <DialogContent>
                 <DialogHeader>
@@ -496,7 +520,6 @@ export default function Construction() {
               </DialogContent>
             </Dialog>
             
-            {/* Dialog for adding an activity to a projection */}
             <Dialog open={!!selectedProjection} onOpenChange={(open) => !open && setSelectedProjection(null)}>
               <DialogContent>
                 <DialogHeader>
@@ -604,22 +627,11 @@ export default function Construction() {
                 {isViewingExecutions ? (
                   <div className="space-y-6">
                     <div className="flex items-center gap-4">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {format(selectedExecutionDate, "PPP", { locale: es })}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <DatePicker
-                            mode="single"
-                            selected={selectedExecutionDate}
-                            onSelect={(date) => date && setSelectedExecutionDate(date)}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      <DatePicker
+                        date={selectedExecutionDate}
+                        onSelect={(date) => date && setSelectedExecutionDate(date)}
+                        className="w-[240px]"
+                      />
                       <Button variant="outline" onClick={() => refetchExecutions()}>
                         Actualizar
                       </Button>
@@ -680,7 +692,6 @@ export default function Construction() {
               </CardContent>
             </Card>
             
-            {/* Dialog for creating a new execution */}
             <Dialog open={isCreatingExecution} onOpenChange={setIsCreatingExecution}>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
@@ -693,22 +704,10 @@ export default function Construction() {
                 <div className="space-y-4 py-4">
                   <div className="flex items-center space-x-2">
                     <Label htmlFor="execution-date" className="w-[100px]">Fecha:</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left font-normal">
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {format(selectedExecutionDate, "PPP", { locale: es })}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <DatePicker
-                          mode="single"
-                          selected={selectedExecutionDate}
-                          onSelect={(date) => date && setSelectedExecutionDate(date)}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <DatePicker
+                      date={selectedExecutionDate}
+                      onSelect={(date) => date && setSelectedExecutionDate(date)}
+                    />
                   </div>
                   
                   <div className="space-y-2">
@@ -800,6 +799,36 @@ export default function Construction() {
                       )}
                       
                       <div className="space-y-2">
+                        <Label htmlFor="photos">Fotos</Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            id="photos"
+                            type="file" 
+                            accept="image/*"
+                            multiple
+                            onChange={handleFileChange}
+                            className="flex-1"
+                          />
+                          <Button variant="outline" type="button" className="flex items-center">
+                            <Upload className="mr-2 h-4 w-4" />
+                            Subir
+                          </Button>
+                        </div>
+                        {selectedFiles.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-sm text-muted-foreground">{selectedFiles.length} archivo(s) seleccionado(s)</p>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {selectedFiles.map((file, index) => (
+                                <Badge key={index} variant="secondary">
+                                  {file.name}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-2">
                         <Label htmlFor="notes">Notas</Label>
                         <Textarea
                           id="notes"
@@ -821,6 +850,7 @@ export default function Construction() {
                     setNotes("");
                     setIssueCategory(undefined);
                     setIssueOtherDescription("");
+                    setSelectedFiles([]);
                   }}>
                     Cancelar
                   </Button>

@@ -96,6 +96,7 @@ export interface Activity {
   workQuantityId: string;
   name: string;
   contractorId: string;
+  contractorName?: string;
   estimatedQuantity: number;
   executedQuantity: number;
   unit: string;

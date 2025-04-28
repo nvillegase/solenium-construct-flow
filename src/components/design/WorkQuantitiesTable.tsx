@@ -32,6 +32,9 @@ export const WorkQuantitiesTable: React.FC<WorkQuantitiesTableProps> = ({
   onUpdate
 }) => {
   const { catalog, isLoading } = useWorkQuantityCatalog();
+  
+  // Ensure catalog is never undefined
+  const safeCatalog = Array.isArray(catalog) ? catalog : [];
 
   return (
     <Card>
@@ -59,7 +62,7 @@ export const WorkQuantitiesTable: React.FC<WorkQuantitiesTableProps> = ({
                   <td className="p-2" colSpan={2}>
                     {editingQuantity === item.id ? (
                       <WorkQuantityCombobox
-                        items={catalog}
+                        items={safeCatalog}
                         value={item.catalogId}
                         isLoading={isLoading}
                         onSelect={(selected) => {

@@ -33,6 +33,9 @@ export const WorkQuantityCombobox = ({
   const [open, setOpen] = React.useState(false);
   const selectedItem = items && items.length > 0 ? items.find(item => item.id === value) : undefined;
 
+  // Default to empty array if items is undefined
+  const safeItems = Array.isArray(items) ? items : [];
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -56,7 +59,7 @@ export const WorkQuantityCombobox = ({
           <CommandInput placeholder="Buscar cantidad de obra..." />
           <CommandEmpty>No se encontraron resultados.</CommandEmpty>
           <CommandGroup className="max-h-[300px] overflow-y-auto">
-            {items && items.map((item) => (
+            {safeItems.map((item) => (
               <CommandItem
                 key={item.id}
                 value={item.description}

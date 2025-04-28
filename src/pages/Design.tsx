@@ -1,4 +1,3 @@
-
 import React from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -42,7 +41,7 @@ const Design = () => {
     saveMaterial,
     isLoading: isLoadingMaterials,
     error: materialsError
-  } = useMaterials();
+  } = useMaterials(selectedProjectId || '');
   
   React.useEffect(() => {
     setEditingQuantity(null);

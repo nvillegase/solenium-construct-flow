@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { Material } from "@/lib/types";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -167,7 +166,6 @@ export const useMaterials = (initialProjectId?: string) => {
       usedQuantity: 0
     };
     
-    // Just add the new material to the local state without reloading from the server
     setMaterials([...materials, newItem]);
     setEditingMaterial(newItem.id);
   };
@@ -208,9 +206,6 @@ export const useMaterials = (initialProjectId?: string) => {
         materialId: materialCatalogId,
         quantity: material.estimatedQuantity
       });
-      
-      // Don't remove the temporary material until we get confirmation from the server
-      // to preserve the user experience
     }
     
     setEditingMaterial(null);

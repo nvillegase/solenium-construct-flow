@@ -44,7 +44,6 @@ export const MaterialsTable: React.FC<MaterialsTableProps> = ({
             <thead>
               <tr className="border-b">
                 <th className="text-left p-2">Nombre</th>
-                <th className="text-left p-2">Unidad</th>
                 <th className="text-left p-2">Cantidad Estimada</th>
                 <th className="text-center p-2">Acciones</th>
               </tr>
@@ -65,17 +64,6 @@ export const MaterialsTable: React.FC<MaterialsTableProps> = ({
                       />
                     ) : (
                       material.name
-                    )}
-                  </td>
-                  <td className="p-2 editable-cell" onClick={() => onEdit(material.id)}>
-                    {editingMaterial === material.id ? (
-                      <Input
-                        value={material.unit}
-                        onChange={e => onUpdate(material.id, 'unit', e.target.value)}
-                        className="max-w-xs"
-                      />
-                    ) : (
-                      material.unit
                     )}
                   </td>
                   <td className="p-2 editable-cell" onClick={() => onEdit(material.id)}>

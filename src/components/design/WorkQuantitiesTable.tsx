@@ -50,7 +50,6 @@ export const WorkQuantitiesTable: React.FC<WorkQuantitiesTableProps> = ({
             <thead>
               <tr className="border-b">
                 <th className="text-left p-2">Descripción</th>
-                <th className="text-left p-2">Unidad</th>
                 <th className="text-left p-2">Cantidad</th>
                 <th className="text-left p-2">Fecha Esperada</th>
                 <th className="text-center p-2">Acciones</th>
@@ -59,7 +58,7 @@ export const WorkQuantitiesTable: React.FC<WorkQuantitiesTableProps> = ({
             <tbody>
               {workQuantities.map(item => (
                 <tr key={item.id} className="border-b">
-                  <td className="p-2" colSpan={2}>
+                  <td className="p-2">
                     {editingQuantity === item.id ? (
                       <WorkQuantityCombobox
                         items={safeCatalog}
@@ -86,7 +85,7 @@ export const WorkQuantitiesTable: React.FC<WorkQuantitiesTableProps> = ({
                         type="number"
                         min="0"
                         value={item.quantity}
-                        onChange={e => onUpdate(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                        onChange={e => onUpdate(item.id, 'quantity', parseFloat(e.target.value || '0'))}
                         className="max-w-xs"
                       />
                     ) : (

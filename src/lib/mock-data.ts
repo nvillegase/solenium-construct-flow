@@ -94,7 +94,8 @@ export const mockWorkQuantities: WorkQuantity[] = [
     unit: 'm3',
     quantity: 150,
     expectedExecutionDate: '2024-05-10',
-    materialIds: ['mat-1', 'mat-2']
+    materialIds: ['mat-1', 'mat-2'],
+    catalogId: 'cat-1'
   },
   {
     id: 'wq-2',
@@ -103,7 +104,8 @@ export const mockWorkQuantities: WorkQuantity[] = [
     unit: 'm2',
     quantity: 300,
     expectedExecutionDate: '2024-05-15',
-    materialIds: ['mat-3', 'mat-4']
+    materialIds: ['mat-3', 'mat-4'],
+    catalogId: 'cat-2'
   },
   {
     id: 'wq-3',
@@ -112,7 +114,8 @@ export const mockWorkQuantities: WorkQuantity[] = [
     unit: 'punto',
     quantity: 200,
     expectedExecutionDate: '2024-06-01',
-    materialIds: ['mat-5', 'mat-6']
+    materialIds: ['mat-5', 'mat-6'],
+    catalogId: 'cat-3'
   },
   {
     id: 'wq-4',
@@ -121,7 +124,8 @@ export const mockWorkQuantities: WorkQuantity[] = [
     unit: 'm2',
     quantity: 400,
     expectedExecutionDate: '2024-06-15',
-    materialIds: ['mat-7', 'mat-8']
+    materialIds: ['mat-7', 'mat-8'],
+    catalogId: 'cat-4'
   },
   {
     id: 'wq-5',
@@ -130,7 +134,8 @@ export const mockWorkQuantities: WorkQuantity[] = [
     unit: 'panel',
     quantity: 100,
     expectedExecutionDate: '2024-07-01',
-    materialIds: ['mat-9', 'mat-10']
+    materialIds: ['mat-9', 'mat-10'],
+    catalogId: 'cat-5'
   },
   {
     id: 'wq-6',
@@ -139,7 +144,8 @@ export const mockWorkQuantities: WorkQuantity[] = [
     unit: 'kg',
     quantity: 5000,
     expectedExecutionDate: '2024-05-20',
-    materialIds: ['mat-11', 'mat-12']
+    materialIds: ['mat-11', 'mat-12'],
+    catalogId: 'cat-6'
   },
   {
     id: 'wq-7',
@@ -148,7 +154,8 @@ export const mockWorkQuantities: WorkQuantity[] = [
     unit: 'm2',
     quantity: 800,
     expectedExecutionDate: '2024-06-10',
-    materialIds: ['mat-13', 'mat-14']
+    materialIds: ['mat-13', 'mat-14'],
+    catalogId: 'cat-7'
   }
 ];
 
@@ -563,9 +570,6 @@ export const mockDailyExecutions: DailyExecution[] = [
     issueCategory: 'Falta de suministro'
   }
 ];
-
-
-
 
 export const mockDailyProjections: DailyProjection[] = [
   {

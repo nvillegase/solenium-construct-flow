@@ -40,7 +40,8 @@ export const useWorkQuantitiesDB = () => {
       unit: item.work_quantity_catalog.unit,
       quantity: item.quantity,
       expectedExecutionDate: item.expected_execution_date,
-      catalogId: item.work_quantity_id
+      catalogId: item.work_quantity_id,
+      materialIds: [], // Assuming this is handled elsewhere
     }));
   };
 

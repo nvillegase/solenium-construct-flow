@@ -33,7 +33,8 @@ export const useWorkQuantities = (projectId: string) => {
       description: "",
       unit: "",
       quantity: 0,
-      catalogId: ""
+      catalogId: "",
+      materialIds: []
     };
 
     const tempWorkQuantities = [...workQuantities, newItem];

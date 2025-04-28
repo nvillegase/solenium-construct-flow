@@ -179,7 +179,7 @@ const Design = () => {
               editingQuantity={editingQuantity}
               selectedProjectId={selectedProjectId}
               isSupervisor={isSupervisor}
-              onAdd={() => addWorkQuantity(selectedProjectId || '')}
+              onAdd={() => addWorkQuantity()}
               onSave={saveWorkQuantity}
               onDelete={deleteWorkQuantity}
               onEdit={setEditingQuantity}

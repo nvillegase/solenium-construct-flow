@@ -10,6 +10,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { WorkQuantitiesTable } from "@/components/design/WorkQuantitiesTable";
 import { MaterialsTable } from "@/components/design/MaterialsTable";
 import { MaterialRelations } from "@/components/design/MaterialRelations";
+import { useWorkQuantityMaterials } from "@/hooks/useWorkQuantityMaterials";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Design = () => {
   const { projects, selectedProjectId, setSelectedProjectId, isLoading } = useProjects();
@@ -19,7 +21,8 @@ const Design = () => {
   const { hasRole } = useAuth();
   const { toast } = useToast();
   const isSupervisor = hasRole("Supervisor");
-  
+  const queryClient = useQueryClient();
+
   const {
     workQuantities,
     editingQuantity,
@@ -43,6 +46,8 @@ const Design = () => {
     error: materialsError
   } = useMaterials(selectedProjectId || '');
   
+  const { createWorkQuantityMaterialRelations } = useWorkQuantityMaterials();
+
   React.useEffect(() => {
     setEditingQuantity(null);
     setEditingMaterial(null);
@@ -64,7 +69,7 @@ const Design = () => {
     }
   };
 
-  const associateMaterials = () => {
+  const associateMaterials = async () => {
     if (!selectedQuantityForMaterials) {
       toast({
         title: "Error",
@@ -83,22 +88,16 @@ const Design = () => {
       return;
     }
     
-    const updatedQuantities = workQuantities.map(item => 
-      item.id === selectedQuantityForMaterials 
-        ? { 
-            ...item, 
-            materialIds: selectedMaterials 
-          } 
-        : item
+    const success = await createWorkQuantityMaterialRelations(
+      selectedQuantityForMaterials,
+      selectedMaterials
     );
     
-    toast({
-      title: "Materiales asociados",
-      description: `Se han asociado ${selectedMaterials.length} materiales a la cantidad de obra`
-    });
-    
-    setSelectedQuantityForMaterials(null);
-    setSelectedMaterials([]);
+    if (success) {
+      await queryClient.invalidateQueries({ queryKey: ['workQuantities', selectedProjectId] });
+      setSelectedQuantityForMaterials(null);
+      setSelectedMaterials([]);
+    }
   };
 
   const removeMaterialFromWorkQuantity = (workQuantityId: string, materialId: string) => {

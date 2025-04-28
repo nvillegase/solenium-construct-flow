@@ -1,10 +1,11 @@
-
 import React from "react";
 import { Material } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Save, Trash } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MaterialCombobox } from "./MaterialCombobox";
+import { useMaterialCatalog } from "@/hooks/useMaterialCatalog";
 
 interface MaterialsTableProps {
   materials: Material[];
@@ -27,6 +28,8 @@ export const MaterialsTable: React.FC<MaterialsTableProps> = ({
   onEdit,
   onUpdate
 }) => {
+  const { items: catalogItems, isLoading } = useMaterialCatalog();
+  
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -49,13 +52,16 @@ export const MaterialsTable: React.FC<MaterialsTableProps> = ({
             <tbody>
               {materials.map(material => (
                 <tr key={material.id} className="border-b">
-                  <td className="p-2 editable-cell" onClick={() => onEdit(material.id)}>
+                  <td className="p-2" onClick={() => onEdit(material.id)}>
                     {editingMaterial === material.id ? (
-                      <Input
-                        value={material.name}
-                        onChange={e => onUpdate(material.id, 'name', e.target.value)}
-                        autoFocus
-                        className="max-w-xs"
+                      <MaterialCombobox
+                        items={catalogItems}
+                        value={material.id}
+                        onSelect={(selectedMaterial) => {
+                          onUpdate(material.id, 'name', selectedMaterial.name);
+                          onUpdate(material.id, 'unit', selectedMaterial.unit);
+                        }}
+                        isLoading={isLoading}
                       />
                     ) : (
                       material.name

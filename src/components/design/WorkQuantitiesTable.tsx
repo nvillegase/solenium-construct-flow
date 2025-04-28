@@ -1,12 +1,11 @@
-
 import React from "react";
 import { WorkQuantity } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Save, Trash } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useWorkQuantityCatalog } from "@/hooks/useWorkQuantityCatalog";
 import { WorkQuantityCombobox } from "./WorkQuantityCombobox";
+import { useWorkQuantityCatalog } from "@/hooks/useWorkQuantityCatalog";
 
 interface WorkQuantitiesTableProps {
   workQuantities: WorkQuantity[];
@@ -14,7 +13,7 @@ interface WorkQuantitiesTableProps {
   selectedProjectId: string;
   isSupervisor: boolean;
   onAdd: () => void;
-  onSave: () => void;
+  onSave: (id: string) => void;
   onDelete: (id: string) => void;
   onEdit: (id: string) => void;
   onUpdate: (id: string, field: keyof WorkQuantity, value: string | number) => void;
@@ -31,11 +30,8 @@ export const WorkQuantitiesTable: React.FC<WorkQuantitiesTableProps> = ({
   onEdit,
   onUpdate
 }) => {
-  const { catalog = [], isLoading } = useWorkQuantityCatalog();
+  const { catalog: catalogItems, isLoading } = useWorkQuantityCatalog();
   
-  // Ensure catalog is always an array
-  const safeCatalog = catalog && Array.isArray(catalog) ? catalog : [];
-
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -61,7 +57,7 @@ export const WorkQuantitiesTable: React.FC<WorkQuantitiesTableProps> = ({
                   <td className="p-2">
                     {editingQuantity === item.id ? (
                       <WorkQuantityCombobox
-                        items={safeCatalog}
+                        items={catalogItems}
                         value={item.catalogId}
                         isLoading={isLoading}
                         onSelect={(selected) => {
@@ -112,7 +108,7 @@ export const WorkQuantitiesTable: React.FC<WorkQuantitiesTableProps> = ({
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        onClick={onSave}
+                        onClick={() => onSave(item.id)}
                         className="h-8 w-8 text-green-600"
                       >
                         <Save size={16} />

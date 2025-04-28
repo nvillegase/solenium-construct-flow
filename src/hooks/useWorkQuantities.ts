@@ -1,7 +1,7 @@
-
 import { useState } from "react";
 import { WorkQuantity } from "@/lib/types";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { useWorkQuantitiesDB } from "./useWorkQuantitiesDB";
 
 export const useWorkQuantities = (initialWorkQuantities: WorkQuantity[] = []) => {
   const [workQuantities, setWorkQuantities] = useState<WorkQuantity[]>(
@@ -11,8 +11,9 @@ export const useWorkQuantities = (initialWorkQuantities: WorkQuantity[] = []) =>
   );
   const [editingQuantity, setEditingQuantity] = useState<string | null>(null);
   const { toast } = useToast();
+  const { createWorkQuantity } = useWorkQuantitiesDB();
 
-  const addWorkQuantity = (projectId: string) => {
+  const addWorkQuantity = async (projectId: string) => {
     if (!projectId) {
       toast({
         title: "Error",
@@ -23,13 +24,14 @@ export const useWorkQuantities = (initialWorkQuantities: WorkQuantity[] = []) =>
     }
     
     const newItem: WorkQuantity = {
-      id: `wq-${Date.now()}`,
+      id: `temp-${Date.now()}`,
       projectId,
       description: "",
       unit: "",
       quantity: 0,
-      catalogId: "" // Initialize with empty string
+      catalogId: ""
     };
+
     setWorkQuantities([...workQuantities, newItem]);
     setEditingQuantity(newItem.id);
   };
@@ -50,6 +52,32 @@ export const useWorkQuantities = (initialWorkQuantities: WorkQuantity[] = []) =>
     );
   };
 
+  const saveWorkQuantity = async (id: string) => {
+    const workQuantity = workQuantities.find(item => item.id === id);
+    if (!workQuantity) {
+      toast({
+        title: "Error",
+        description: "No se encontró la cantidad de obra",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const savedWorkQuantity = await createWorkQuantity(workQuantity);
+      
+      setWorkQuantities(prev => 
+        prev.map(item => 
+          item.id === id ? { ...item, id: savedWorkQuantity.id } : item
+        )
+      );
+      
+      setEditingQuantity(null);
+    } catch (error) {
+      console.error('Error saving work quantity:', error);
+    }
+  };
+
   return {
     workQuantities,
     setWorkQuantities,
@@ -57,6 +85,7 @@ export const useWorkQuantities = (initialWorkQuantities: WorkQuantity[] = []) =>
     setEditingQuantity,
     addWorkQuantity,
     deleteWorkQuantity,
-    updateWorkQuantity
+    updateWorkQuantity,
+    saveWorkQuantity
   };
 };

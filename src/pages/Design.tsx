@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -29,7 +28,8 @@ const Design = () => {
     setEditingQuantity,
     addWorkQuantity,
     deleteWorkQuantity,
-    updateWorkQuantity
+    updateWorkQuantity,
+    saveWorkQuantity
   } = useWorkQuantities();
 
   const {
@@ -186,7 +186,7 @@ const Design = () => {
               selectedProjectId={selectedProjectId}
               isSupervisor={isSupervisor}
               onAdd={() => addWorkQuantity(selectedProjectId)}
-              onSave={() => saveChanges('workQuantities')}
+              onSave={saveWorkQuantity}
               onDelete={deleteWorkQuantity}
               onEdit={setEditingQuantity}
               onUpdate={updateWorkQuantity}

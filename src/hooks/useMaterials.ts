@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Material } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -48,11 +47,11 @@ export const useMaterials = (initialProjectId?: string) => {
     }
   };
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['materials', initialProjectId],
     queryFn: () => fetchMaterials(initialProjectId),
-    enabled: !!initialProjectId,  // Only run query when we have a project ID
-    staleTime: 0,  // Always fetch fresh data when project changes
+    enabled: !!initialProjectId,
+    staleTime: 0 // Always fetch fresh data when project changes
   });
 
   // Update materials state when query data changes
@@ -216,7 +215,6 @@ export const useMaterials = (initialProjectId?: string) => {
 
   return {
     materials,
-    setMaterials,
     editingMaterial,
     setEditingMaterial,
     addMaterial,
@@ -225,6 +223,5 @@ export const useMaterials = (initialProjectId?: string) => {
     saveMaterial,
     isLoading,
     error,
-    refetch
   };
 };

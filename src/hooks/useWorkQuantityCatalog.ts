@@ -18,7 +18,9 @@ export const useWorkQuantityCatalog = () => {
           .order('description');
 
         if (error) throw error;
-        setCatalog(data || []);
+        
+        // Ensure we always set an array, even if data is null
+        setCatalog(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error fetching catalog:", error);
         toast({
@@ -26,6 +28,7 @@ export const useWorkQuantityCatalog = () => {
           description: "No se pudo cargar el catálogo de cantidades de obra",
           variant: "destructive"
         });
+        // Ensure we reset to an empty array on error
         setCatalog([]);
       } finally {
         setIsLoading(false);

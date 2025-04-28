@@ -25,16 +25,20 @@ interface WorkQuantityComboboxProps {
 }
 
 export const WorkQuantityCombobox = ({
-  items,
+  items = [], // Provide default empty array
   value,
   onSelect,
   isLoading = false,
 }: WorkQuantityComboboxProps) => {
   const [open, setOpen] = React.useState(false);
-  const selectedItem = items && items.length > 0 ? items.find(item => item.id === value) : undefined;
-
-  // Default to empty array if items is undefined
+  
+  // Ensure we have a valid array to work with
   const safeItems = Array.isArray(items) ? items : [];
+  
+  // Find selected item only if we have items and a value
+  const selectedItem = safeItems.length > 0 && value 
+    ? safeItems.find(item => item.id === value) 
+    : undefined;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

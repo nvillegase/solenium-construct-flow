@@ -29,7 +29,7 @@ export interface WorkQuantity {
   quantity: number;
   expectedExecutionDate?: string;
   materialIds?: string[];
-  catalogId?: string; // Added catalogId property
+  catalogId: string; // Required field for storing the selected catalog item id
 }
 
 export interface Material {

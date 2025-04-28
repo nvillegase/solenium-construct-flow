@@ -24,7 +24,7 @@ export const useWorkQuantities = (initialWorkQuantities: WorkQuantity[] = []) =>
       description: "",
       unit: "",
       quantity: 0,
-      catalogId: ""
+      catalogId: "" // Initialize with empty string
     };
     setWorkQuantities([...workQuantities, newItem]);
     setEditingQuantity(newItem.id);

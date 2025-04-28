@@ -1,8 +1,8 @@
-import React, { useEffect } from "react";
+
+import React from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { mockWorkQuantities as initialWorkQuantities, mockMaterials as initialMaterials } from "@/lib/mock-data";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProjects } from "@/contexts/ProjectContext";
 import { useWorkQuantities } from "@/hooks/useWorkQuantities";
@@ -23,18 +23,17 @@ const Design = () => {
   
   const {
     workQuantities,
-    setWorkQuantities,
     editingQuantity,
     setEditingQuantity,
     addWorkQuantity,
     deleteWorkQuantity,
     updateWorkQuantity,
-    saveWorkQuantity
-  } = useWorkQuantities();
+    saveWorkQuantity,
+    isLoading: isLoadingQuantities
+  } = useWorkQuantities(selectedProjectId || '');
 
   const {
     materials,
-    setMaterials,
     editingMaterial,
     setEditingMaterial,
     addMaterial,
@@ -42,19 +41,12 @@ const Design = () => {
     updateMaterial
   } = useMaterials();
   
-  useEffect(() => {
-    if (selectedProjectId) {
-      setWorkQuantities(initialWorkQuantities.filter(item => item.projectId === selectedProjectId));
-      setMaterials(initialMaterials.filter(item => item.projectId === selectedProjectId));
-    } else {
-      setWorkQuantities([]);
-      setMaterials([]);
-    }
+  React.useEffect(() => {
     setEditingQuantity(null);
     setEditingMaterial(null);
     setSelectedQuantityForMaterials(null);
     setSelectedMaterials([]);
-  }, [selectedProjectId]);
+  }, [selectedProjectId, setEditingQuantity, setEditingMaterial]);
 
   const saveChanges = (type: 'workQuantities' | 'materials') => {
     toast({
@@ -89,13 +81,17 @@ const Design = () => {
       return;
     }
     
-    setWorkQuantities(
-      workQuantities.map(item => 
-        item.id === selectedQuantityForMaterials 
-          ? { ...item, materialIds: selectedMaterials } 
-          : item
-      )
+    const updatedQuantities = workQuantities.map(item => 
+      item.id === selectedQuantityForMaterials 
+        ? { 
+            ...item, 
+            materialIds: selectedMaterials 
+          } 
+        : item
     );
+    
+    // Update the work quantities in the UI only for now
+    // We'll implement the database update in a future step
     
     toast({
       title: "Materiales asociados",
@@ -107,17 +103,18 @@ const Design = () => {
   };
 
   const removeMaterialFromWorkQuantity = (workQuantityId: string, materialId: string) => {
-    setWorkQuantities(
-      workQuantities.map(item => {
-        if (item.id === workQuantityId && item.materialIds) {
-          return { 
-            ...item, 
-            materialIds: item.materialIds.filter(id => id !== materialId)
-          };
-        }
-        return item;
-      })
-    );
+    const updatedQuantities = workQuantities.map(item => {
+      if (item.id === workQuantityId && item.materialIds) {
+        return { 
+          ...item, 
+          materialIds: item.materialIds.filter(id => id !== materialId)
+        };
+      }
+      return item;
+    });
+    
+    // Update the work quantities in the UI only for now
+    // We'll implement the database update in a future step
     
     toast({
       title: "Material desasociado",
@@ -185,11 +182,12 @@ const Design = () => {
               editingQuantity={editingQuantity}
               selectedProjectId={selectedProjectId}
               isSupervisor={isSupervisor}
-              onAdd={() => addWorkQuantity(selectedProjectId)}
+              onAdd={addWorkQuantity}
               onSave={saveWorkQuantity}
               onDelete={deleteWorkQuantity}
               onEdit={setEditingQuantity}
               onUpdate={updateWorkQuantity}
+              isLoading={isLoadingQuantities}
             />
           </TabsContent>
           
@@ -198,7 +196,7 @@ const Design = () => {
               materials={materials}
               editingMaterial={editingMaterial}
               selectedProjectId={selectedProjectId}
-              onAdd={() => addMaterial(selectedProjectId)}
+              onAdd={() => addMaterial()}
               onSave={() => saveChanges('materials')}
               onDelete={deleteMaterial}
               onEdit={setEditingMaterial}

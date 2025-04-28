@@ -31,7 +31,7 @@ export const WorkQuantityCombobox = ({
   isLoading = false,
 }: WorkQuantityComboboxProps) => {
   const [open, setOpen] = React.useState(false);
-  const selectedItem = items.find(item => item.id === value);
+  const selectedItem = items && items.length > 0 ? items.find(item => item.id === value) : undefined;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -45,8 +45,8 @@ export const WorkQuantityCombobox = ({
         >
           {isLoading
             ? "Cargando..."
-            : value
-            ? selectedItem?.description
+            : value && selectedItem
+            ? selectedItem.description
             : "Seleccionar cantidad de obra"}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -56,7 +56,7 @@ export const WorkQuantityCombobox = ({
           <CommandInput placeholder="Buscar cantidad de obra..." />
           <CommandEmpty>No se encontraron resultados.</CommandEmpty>
           <CommandGroup className="max-h-[300px] overflow-y-auto">
-            {items.map((item) => (
+            {items && items.map((item) => (
               <CommandItem
                 key={item.id}
                 value={item.description}

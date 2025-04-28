@@ -18,20 +18,22 @@ export const useWorkQuantityCatalog = () => {
           .order('description');
 
         if (error) throw error;
-        setCatalog(data);
+        setCatalog(data || []);
       } catch (error) {
+        console.error("Error fetching catalog:", error);
         toast({
           title: "Error",
           description: "No se pudo cargar el catálogo de cantidades de obra",
           variant: "destructive"
         });
+        setCatalog([]);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchCatalog();
-  }, []);
+  }, [toast]);
 
   return { catalog, isLoading };
 };

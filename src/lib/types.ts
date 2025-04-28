@@ -1,3 +1,4 @@
+
 export type UserRole = 'Diseñador' | 'Suministro' | 'Almacenista' | 'Residente' | 'Supervisor';
 
 export interface User {
@@ -28,6 +29,7 @@ export interface WorkQuantity {
   quantity: number;
   expectedExecutionDate?: string;
   materialIds?: string[];
+  catalogId?: string; // Added catalogId property
 }
 
 export interface Material {

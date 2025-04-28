@@ -43,13 +43,13 @@ export const WorkQuantityCombobox = ({
       placeholder="Seleccionar cantidad de obra"
       noOptionsMessage={() => "No se encontraron resultados"}
       loadingMessage={() => "Cargando..."}
-      formatOptionLabel={({ label, unit }) => (
-        <div>
-          <div>{label}</div>
-          <div className="text-sm text-muted-foreground">Unidad: {unit}</div>
-        </div>
-      )}
+      menuPortalTarget={document.body} // Render menu in a portal
+      menuPosition="fixed" // Use fixed positioning
       styles={{
+        menuPortal: (base) => ({ // Style the portal
+          ...base,
+          zIndex: 9999,
+        }),
         control: (base) => ({
           ...base,
           backgroundColor: 'var(--background)',
@@ -62,6 +62,7 @@ export const WorkQuantityCombobox = ({
           ...base,
           backgroundColor: 'var(--background)',
           border: '1px solid var(--border)',
+          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', // Add shadow for better visibility
         }),
         option: (base, { isFocused, isSelected }) => ({
           ...base,
@@ -87,6 +88,12 @@ export const WorkQuantityCombobox = ({
           color: 'var(--foreground)',
         }),
       }}
+      formatOptionLabel={({ label, unit }) => (
+        <div>
+          <div>{label}</div>
+          <div className="text-sm text-muted-foreground">Unidad: {unit}</div>
+        </div>
+      )}
     />
   );
 };

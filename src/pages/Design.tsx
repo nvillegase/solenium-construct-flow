@@ -1,3 +1,4 @@
+
 import React from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,7 +38,10 @@ const Design = () => {
     setEditingMaterial,
     addMaterial,
     deleteMaterial,
-    updateMaterial
+    updateMaterial,
+    saveMaterial,
+    isLoading: isLoadingMaterials,
+    error: materialsError
   } = useMaterials();
   
   React.useEffect(() => {
@@ -175,7 +179,7 @@ const Design = () => {
               editingQuantity={editingQuantity}
               selectedProjectId={selectedProjectId}
               isSupervisor={isSupervisor}
-              onAdd={addWorkQuantity}
+              onAdd={() => addWorkQuantity(selectedProjectId || '')}
               onSave={saveWorkQuantity}
               onDelete={deleteWorkQuantity}
               onEdit={setEditingQuantity}
@@ -188,12 +192,14 @@ const Design = () => {
             <MaterialsTable
               materials={materials}
               editingMaterial={editingMaterial}
-              selectedProjectId={selectedProjectId}
+              selectedProjectId={selectedProjectId || ''}
               onAdd={() => addMaterial(selectedProjectId)}
-              onSave={() => saveChanges('materials')}
+              onSave={saveMaterial}
               onDelete={deleteMaterial}
               onEdit={setEditingMaterial}
               onUpdate={updateMaterial}
+              isLoading={isLoadingMaterials}
+              error={materialsError}
             />
           </TabsContent>
           

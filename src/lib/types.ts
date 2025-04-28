@@ -1,4 +1,3 @@
-
 export type UserRole = 'Diseñador' | 'Suministro' | 'Almacenista' | 'Residente' | 'Supervisor';
 
 export interface User {
@@ -40,6 +39,7 @@ export interface Material {
   estimatedQuantity: number;
   receivedQuantity: number;
   usedQuantity: number;
+  materialCatalogId?: string; // Add this property to store the reference to material_catalog
 }
 
 export interface PurchaseOrder {

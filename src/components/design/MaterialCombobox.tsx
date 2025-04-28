@@ -1,6 +1,8 @@
 
 import * as React from "react";
 import Select from "react-select";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MaterialCatalog {
   id: string;
@@ -9,21 +11,32 @@ interface MaterialCatalog {
 }
 
 interface MaterialComboboxProps {
-  items: MaterialCatalog[];
   value?: string;
   onSelect: (item: MaterialCatalog) => void;
   isLoading?: boolean;
 }
 
 export const MaterialCombobox = ({
-  items = [],
   value,
   onSelect,
-  isLoading = false,
+  isLoading: externalLoading = false,
 }: MaterialComboboxProps) => {
-  const safeItems = items && Array.isArray(items) ? items : [];
+  // Fetch material catalog from the database
+  const { data: items = [], isLoading: queryLoading } = useQuery({
+    queryKey: ['material-catalog'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('material_catalog')
+        .select('id, name, unit');
+        
+      if (error) throw error;
+      return data;
+    }
+  });
   
-  const options = safeItems.map((item) => ({
+  const isLoading = externalLoading || queryLoading;
+  
+  const options = items.map((item) => ({
     value: item.id,
     label: item.name,
     unit: item.unit,

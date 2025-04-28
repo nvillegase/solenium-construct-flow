@@ -1,11 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { Material } from "@/lib/types";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-export const useMaterials = (initialMaterials: Material[] = []) => {
-  const [materials, setMaterials] = useState<Material[]>(initialMaterials);
+export const useMaterials = (initialProjectId?: string) => {
+  const [materials, setMaterials] = useState<Material[]>([]);
   const [editingMaterial, setEditingMaterial] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -48,9 +49,9 @@ export const useMaterials = (initialMaterials: Material[] = []) => {
   };
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['materials', materials[0]?.projectId],
-    queryFn: () => fetchMaterials(materials[0]?.projectId),
-    enabled: !!materials[0]?.projectId
+    queryKey: ['materials', initialProjectId],
+    queryFn: () => fetchMaterials(initialProjectId),
+    enabled: !!initialProjectId
   });
 
   useEffect(() => {
@@ -166,6 +167,7 @@ export const useMaterials = (initialMaterials: Material[] = []) => {
       usedQuantity: 0
     };
     
+    // Just add the new material to the local state without reloading from the server
     setMaterials([...materials, newItem]);
     setEditingMaterial(newItem.id);
   };
@@ -207,7 +209,8 @@ export const useMaterials = (initialMaterials: Material[] = []) => {
         quantity: material.estimatedQuantity
       });
       
-      setMaterials(materials.filter(m => m.id !== id));
+      // Don't remove the temporary material until we get confirmation from the server
+      // to preserve the user experience
     }
     
     setEditingMaterial(null);

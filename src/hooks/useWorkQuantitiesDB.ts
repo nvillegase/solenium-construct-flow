@@ -10,7 +10,8 @@ export const useWorkQuantitiesDB = () => {
   const fetchWorkQuantities = async (projectId: string) => {
     if (!projectId) return [];
     
-    const { data, error } = await supabase
+    // Fetch work quantities with their catalog info
+    const { data: workQuantitiesData, error } = await supabase
       .from('project_work_quantities')
       .select(`
         id,
@@ -33,16 +34,44 @@ export const useWorkQuantitiesDB = () => {
       throw error;
     }
 
-    return data.map(item => ({
-      id: item.id,
-      projectId,
-      description: item.work_quantity_catalog.description,
-      unit: item.work_quantity_catalog.unit,
-      quantity: item.quantity,
-      expectedExecutionDate: item.expected_execution_date,
-      catalogId: item.work_quantity_id,
-      materialIds: [], // Assuming this is handled elsewhere
+    // Now fetch the related materials for each work quantity
+    const workQuantities = await Promise.all(workQuantitiesData.map(async (item) => {
+      // Get related materials from work_quantity_materials table
+      const { data: relatedMaterials, error: relatedMaterialsError } = await supabase
+        .from('work_quantity_materials')
+        .select('project_material_id')
+        .eq('project_work_quantity_id', item.id);
+        
+      if (relatedMaterialsError) {
+        console.error("Error fetching related materials:", relatedMaterialsError);
+        return {
+          id: item.id,
+          projectId,
+          description: item.work_quantity_catalog.description,
+          unit: item.work_quantity_catalog.unit,
+          quantity: item.quantity,
+          expectedExecutionDate: item.expected_execution_date,
+          catalogId: item.work_quantity_id,
+          materialIds: [] // Return empty array if there's an error
+        };
+      }
+
+      // Extract just the material IDs from the related materials
+      const materialIds = relatedMaterials.map(mat => mat.project_material_id);
+      
+      return {
+        id: item.id,
+        projectId,
+        description: item.work_quantity_catalog.description,
+        unit: item.work_quantity_catalog.unit,
+        quantity: item.quantity,
+        expectedExecutionDate: item.expected_execution_date,
+        catalogId: item.work_quantity_id,
+        materialIds: materialIds
+      };
     }));
+
+    return workQuantities;
   };
 
   const createWorkQuantity = async (workQuantity: Omit<WorkQuantity, 'id'>) => {

@@ -27,7 +27,7 @@ export interface WorkQuantity {
   unit: string;
   quantity: number;
   expectedExecutionDate?: string;
-  materialIds?: string[];
+  materialIds: string[];
   catalogId: string; // Required field for storing the selected catalog item id
 }
 

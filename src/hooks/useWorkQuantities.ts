@@ -1,19 +1,23 @@
+
 import { useState } from "react";
 import { WorkQuantity } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useWorkQuantitiesDB } from "./useWorkQuantitiesDB";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-export const useWorkQuantities = (initialWorkQuantities: WorkQuantity[] = []) => {
-  const [workQuantities, setWorkQuantities] = useState<WorkQuantity[]>(
-    initialWorkQuantities && Array.isArray(initialWorkQuantities) 
-    ? initialWorkQuantities 
-    : []
-  );
+export const useWorkQuantities = (projectId: string) => {
   const [editingQuantity, setEditingQuantity] = useState<string | null>(null);
   const { toast } = useToast();
-  const { createWorkQuantity } = useWorkQuantitiesDB();
+  const { createWorkQuantity, fetchWorkQuantities } = useWorkQuantitiesDB();
+  const queryClient = useQueryClient();
 
-  const addWorkQuantity = async (projectId: string) => {
+  const { data: workQuantities = [], isLoading, error } = useQuery({
+    queryKey: ['workQuantities', projectId],
+    queryFn: () => fetchWorkQuantities(projectId),
+    enabled: !!projectId,
+  });
+
+  const addWorkQuantity = async () => {
     if (!projectId) {
       toast({
         title: "Error",
@@ -32,12 +36,14 @@ export const useWorkQuantities = (initialWorkQuantities: WorkQuantity[] = []) =>
       catalogId: ""
     };
 
-    setWorkQuantities([...workQuantities, newItem]);
+    const tempWorkQuantities = [...workQuantities, newItem];
+    queryClient.setQueryData(['workQuantities', projectId], tempWorkQuantities);
     setEditingQuantity(newItem.id);
   };
 
   const deleteWorkQuantity = (id: string) => {
-    setWorkQuantities(workQuantities.filter(item => item.id !== id));
+    const filteredQuantities = workQuantities.filter(item => item.id !== id);
+    queryClient.setQueryData(['workQuantities', projectId], filteredQuantities);
     toast({
       title: "Elemento eliminado",
       description: "La cantidad de obra ha sido eliminada"
@@ -45,11 +51,10 @@ export const useWorkQuantities = (initialWorkQuantities: WorkQuantity[] = []) =>
   };
 
   const updateWorkQuantity = (id: string, field: keyof WorkQuantity, value: string | number) => {
-    setWorkQuantities(
-      workQuantities.map(item => 
-        item.id === id ? { ...item, [field]: value } : item
-      )
+    const updatedQuantities = workQuantities.map(item => 
+      item.id === id ? { ...item, [field]: value } : item
     );
+    queryClient.setQueryData(['workQuantities', projectId], updatedQuantities);
   };
 
   const saveWorkQuantity = async (id: string) => {
@@ -64,14 +69,8 @@ export const useWorkQuantities = (initialWorkQuantities: WorkQuantity[] = []) =>
     }
 
     try {
-      const savedWorkQuantity = await createWorkQuantity(workQuantity);
-      
-      setWorkQuantities(prev => 
-        prev.map(item => 
-          item.id === id ? { ...item, id: savedWorkQuantity.id } : item
-        )
-      );
-      
+      await createWorkQuantity(workQuantity);
+      await queryClient.invalidateQueries({ queryKey: ['workQuantities', projectId] });
       setEditingQuantity(null);
     } catch (error) {
       console.error('Error saving work quantity:', error);
@@ -80,12 +79,13 @@ export const useWorkQuantities = (initialWorkQuantities: WorkQuantity[] = []) =>
 
   return {
     workQuantities,
-    setWorkQuantities,
     editingQuantity,
     setEditingQuantity,
     addWorkQuantity,
     deleteWorkQuantity,
     updateWorkQuantity,
-    saveWorkQuantity
+    saveWorkQuantity,
+    isLoading,
+    error
   };
 };

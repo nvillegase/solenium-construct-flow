@@ -12,6 +12,7 @@ interface WorkQuantitiesTableProps {
   editingQuantity: string | null;
   selectedProjectId: string;
   isSupervisor: boolean;
+  isLoading?: boolean;
   onAdd: () => void;
   onSave: (id: string) => void;
   onDelete: (id: string) => void;
@@ -24,14 +25,30 @@ export const WorkQuantitiesTable: React.FC<WorkQuantitiesTableProps> = ({
   editingQuantity,
   selectedProjectId,
   isSupervisor,
+  isLoading,
   onAdd,
   onSave,
   onDelete,
   onEdit,
   onUpdate
 }) => {
-  const { catalog: catalogItems, isLoading } = useWorkQuantityCatalog();
+  const { catalog: catalogItems, isLoading: isCatalogLoading } = useWorkQuantityCatalog();
   
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle>Cantidades de Obra</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-6 text-gray-500">
+            Cargando cantidades de obra...
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -59,7 +76,7 @@ export const WorkQuantitiesTable: React.FC<WorkQuantitiesTableProps> = ({
                       <WorkQuantityCombobox
                         items={catalogItems}
                         value={item.catalogId}
-                        isLoading={isLoading}
+                        isLoading={isCatalogLoading}
                         onSelect={(selected) => {
                           onUpdate(item.id, 'description', selected.description);
                           onUpdate(item.id, 'unit', selected.unit);

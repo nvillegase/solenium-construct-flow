@@ -8,7 +8,7 @@ export const useMaterials = (initialMaterials: Material[] = []) => {
   const [editingMaterial, setEditingMaterial] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const addMaterial = (projectId: string) => {
+  const addMaterial = (projectId?: string) => {
     if (!projectId) {
       toast({
         title: "Error",

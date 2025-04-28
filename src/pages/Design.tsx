@@ -1,4 +1,3 @@
-
 import React from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -90,9 +89,6 @@ const Design = () => {
         : item
     );
     
-    // Update the work quantities in the UI only for now
-    // We'll implement the database update in a future step
-    
     toast({
       title: "Materiales asociados",
       description: `Se han asociado ${selectedMaterials.length} materiales a la cantidad de obra`
@@ -112,9 +108,6 @@ const Design = () => {
       }
       return item;
     });
-    
-    // Update the work quantities in the UI only for now
-    // We'll implement the database update in a future step
     
     toast({
       title: "Material desasociado",
@@ -196,7 +189,7 @@ const Design = () => {
               materials={materials}
               editingMaterial={editingMaterial}
               selectedProjectId={selectedProjectId}
-              onAdd={() => addMaterial()}
+              onAdd={() => addMaterial(selectedProjectId)}
               onSave={() => saveChanges('materials')}
               onDelete={deleteMaterial}
               onEdit={setEditingMaterial}

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Material } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -50,9 +51,11 @@ export const useMaterials = (initialProjectId?: string) => {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['materials', initialProjectId],
     queryFn: () => fetchMaterials(initialProjectId),
-    enabled: !!initialProjectId
+    enabled: !!initialProjectId,  // Only run query when we have a project ID
+    staleTime: 0,  // Always fetch fresh data when project changes
   });
 
+  // Update materials state when query data changes
   useEffect(() => {
     if (data) {
       setMaterials(data);

@@ -1,20 +1,6 @@
 
 import * as React from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import Select from "react-select";
 import { WorkQuantityCatalog } from "@/lib/types";
 
 interface WorkQuantityComboboxProps {
@@ -25,70 +11,82 @@ interface WorkQuantityComboboxProps {
 }
 
 export const WorkQuantityCombobox = ({
-  items = [], // Provide default empty array
+  items = [],
   value,
   onSelect,
   isLoading = false,
 }: WorkQuantityComboboxProps) => {
-  const [open, setOpen] = React.useState(false);
-  
   // Ensure we have a valid array to work with
   const safeItems = items && Array.isArray(items) ? items : [];
   
-  // Find selected item only if we have items and a value
-  const selectedItem = safeItems.length > 0 && value 
-    ? safeItems.find(item => item.id === value) 
-    : undefined;
+  // Format items for react-select
+  const options = safeItems.map((item) => ({
+    value: item.id,
+    label: item.description,
+    unit: item.unit,
+    data: item, // Store the full item data
+  }));
+
+  // Find the selected option
+  const selectedOption = options.find(option => option.value === value);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between"
-          disabled={isLoading}
-        >
-          {isLoading
-            ? "Cargando..."
-            : value && selectedItem
-            ? selectedItem.description
-            : "Seleccionar cantidad de obra"}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0">
-        <Command>
-          <CommandInput placeholder="Buscar cantidad de obra..." />
-          <CommandEmpty>No se encontraron resultados.</CommandEmpty>
-          <CommandGroup className="max-h-[300px] overflow-y-auto">
-            {safeItems.map((item) => (
-              <CommandItem
-                key={item.id}
-                value={item.description}
-                onSelect={() => {
-                  onSelect(item);
-                  setOpen(false);
-                }}
-              >
-                <Check
-                  className={cn(
-                    "mr-2 h-4 w-4",
-                    value === item.id ? "opacity-100" : "opacity-0"
-                  )}
-                />
-                <div className="flex flex-col">
-                  <span>{item.description}</span>
-                  <span className="text-xs text-muted-foreground">
-                    Unidad: {item.unit}
-                  </span>
-                </div>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </Command>
-      </PopoverContent>
-    </Popover>
+    <Select
+      value={selectedOption}
+      onChange={(newValue: any) => {
+        if (newValue) {
+          onSelect(newValue.data);
+        }
+      }}
+      options={options}
+      isLoading={isLoading}
+      placeholder="Seleccionar cantidad de obra"
+      noOptionsMessage={() => "No se encontraron resultados"}
+      loadingMessage={() => "Cargando..."}
+      formatOptionLabel={({ label, unit }) => (
+        <div>
+          <div>{label}</div>
+          <div className="text-sm text-muted-foreground">Unidad: {unit}</div>
+        </div>
+      )}
+      styles={{
+        control: (base) => ({
+          ...base,
+          backgroundColor: 'var(--background)',
+          borderColor: 'var(--input)',
+          '&:hover': {
+            borderColor: 'var(--ring)',
+          },
+        }),
+        menu: (base) => ({
+          ...base,
+          backgroundColor: 'var(--background)',
+          border: '1px solid var(--border)',
+        }),
+        option: (base, { isFocused, isSelected }) => ({
+          ...base,
+          backgroundColor: isSelected 
+            ? 'var(--primary)' 
+            : isFocused 
+              ? 'var(--accent)' 
+              : 'transparent',
+          color: isSelected 
+            ? 'var(--primary-foreground)' 
+            : 'var(--foreground)',
+          cursor: 'pointer',
+          ':active': {
+            backgroundColor: 'var(--accent)',
+          },
+        }),
+        singleValue: (base) => ({
+          ...base,
+          color: 'var(--foreground)',
+        }),
+        input: (base) => ({
+          ...base,
+          color: 'var(--foreground)',
+        }),
+      }}
+    />
   );
 };

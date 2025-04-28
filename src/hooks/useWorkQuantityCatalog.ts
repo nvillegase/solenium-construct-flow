@@ -12,6 +12,7 @@ export const useWorkQuantityCatalog = () => {
   useEffect(() => {
     const fetchCatalog = async () => {
       try {
+        setIsLoading(true);
         const { data, error } = await supabase
           .from('work_quantity_catalog')
           .select('*')
@@ -20,7 +21,7 @@ export const useWorkQuantityCatalog = () => {
         if (error) throw error;
         
         // Ensure we always set an array, even if data is null
-        setCatalog(Array.isArray(data) ? data : []);
+        setCatalog(data && Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Error fetching catalog:", error);
         toast({
@@ -38,5 +39,9 @@ export const useWorkQuantityCatalog = () => {
     fetchCatalog();
   }, [toast]);
 
-  return { catalog, isLoading };
+  // Always return a valid array, never undefined
+  return { 
+    catalog: catalog || [], 
+    isLoading 
+  };
 };

@@ -33,7 +33,7 @@ export const WorkQuantityCombobox = ({
   const [open, setOpen] = React.useState(false);
   
   // Ensure we have a valid array to work with
-  const safeItems = Array.isArray(items) ? items : [];
+  const safeItems = items && Array.isArray(items) ? items : [];
   
   // Find selected item only if we have items and a value
   const selectedItem = safeItems.length > 0 && value 

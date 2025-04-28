@@ -4,7 +4,11 @@ import { WorkQuantity } from "@/lib/types";
 import { useToast } from "@/components/ui/use-toast";
 
 export const useWorkQuantities = (initialWorkQuantities: WorkQuantity[] = []) => {
-  const [workQuantities, setWorkQuantities] = useState<WorkQuantity[]>(initialWorkQuantities);
+  const [workQuantities, setWorkQuantities] = useState<WorkQuantity[]>(
+    initialWorkQuantities && Array.isArray(initialWorkQuantities) 
+    ? initialWorkQuantities 
+    : []
+  );
   const [editingQuantity, setEditingQuantity] = useState<string | null>(null);
   const { toast } = useToast();
 

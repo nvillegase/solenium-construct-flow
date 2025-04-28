@@ -31,10 +31,10 @@ export const WorkQuantitiesTable: React.FC<WorkQuantitiesTableProps> = ({
   onEdit,
   onUpdate
 }) => {
-  const { catalog, isLoading } = useWorkQuantityCatalog();
+  const { catalog = [], isLoading } = useWorkQuantityCatalog();
   
-  // Ensure catalog is never undefined
-  const safeCatalog = Array.isArray(catalog) ? catalog : [];
+  // Ensure catalog is always an array
+  const safeCatalog = catalog && Array.isArray(catalog) ? catalog : [];
 
   return (
     <Card>

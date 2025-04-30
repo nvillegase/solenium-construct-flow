@@ -79,23 +79,13 @@ const Login = () => {
               
               <div className="text-sm">
                 <p className="font-medium text-gray-500">
-                  Usuarios de prueba:
+                  Credenciales de acceso (demo):
                 </p>
-                <div className="mt-1 grid grid-cols-1 gap-1">
-                  {mockUsers.map((user) => (
-                    <button
-                      key={user.id}
-                      type="button"
-                      className="text-xs text-left text-solenium-blue hover:underline"
-                      onClick={() => setEmail(user.email)}
-                      disabled={isLoading}
-                    >
-                      {user.email} ({user.role})
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-1 text-gray-500 text-xs">
-                  Contraseña: cualquier valor
+                <p className="mt-1 text-gray-500">
+                  Email: karol@solenium.co
+                </p>
+                <p className="text-gray-500">
+                  Contraseña: cinnamon9
                 </p>
               </div>
             </CardContent>

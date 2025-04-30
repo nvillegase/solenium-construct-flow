@@ -11,10 +11,11 @@ import { DailyProjectionComponent } from "@/components/construction/DailyProject
 import { DailyExecutionComponent } from "@/components/construction/DailyExecution";
 import { supabase } from "@/integrations/supabase/client";
 import { Activity, Contractor } from "@/lib/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Construction() {
   const { user } = useAuth();
-  const { projects, selectedProjectId, setSelectedProjectId } = useProjects();
+  const { projects, selectedProjectId, setSelectedProjectId, isLoading: isLoadingProjects } = useProjects();
   const currentProject = projects.find(p => p.id === selectedProjectId);
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState("daily-projection");
@@ -93,7 +94,32 @@ export default function Construction() {
   return (
     <AppLayout>
       <div className="container mx-auto py-6">
-        <h1 className="text-3xl font-bold mb-6">Construcción - {currentProject.name}</h1>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <h1 className="text-3xl font-bold">Construcción</h1>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Proyecto actual:</span>
+            {isLoadingProjects ? (
+              <div className="w-[200px] h-10 bg-gray-100 animate-pulse rounded"></div>
+            ) : (
+              <Select
+                value={selectedProjectId || ""}
+                onValueChange={setSelectedProjectId}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Seleccionar proyecto" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.map(project => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        </div>
         
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
           <TabsList className="mb-6">

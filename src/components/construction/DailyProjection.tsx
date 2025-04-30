@@ -223,17 +223,48 @@ export function DailyProjectionComponent({
       const workQuantity = workQuantities.find(wq => wq.id === selectedWorkQuantityId);
       if (!workQuantity) throw new Error("Cantidad de obra no encontrada");
       
+      // First, create the activity if it doesn't exist
+      const { data: activityData, error: activityError } = await supabase
+        .from("activities")
+        .insert({
+          project_id: currentProject.id,
+          project_work_quantity_id: selectedWorkQuantityId,
+          contractor_id: selectedContractorId,
+          name: workQuantity.description,
+          estimated_quantity: executedQuantity,
+          executed_quantity: 0,
+          progress: 0,
+          unit: workQuantity.unit,
+          date: format(selectedDate, "yyyy-MM-dd")
+        })
+        .select('id')
+        .single();
+      
+      if (activityError) {
+        console.error("Error creating activity:", activityError);
+        toast({
+          title: "Error",
+          description: "No se pudo crear la actividad",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Now add the activity to the daily projection
       const { error } = await supabase
         .from("daily_projection_activities")
         .insert({
           daily_projection_id: projectionId,
-          activity_id: selectedWorkQuantityId, // Using the workQuantityId as the activity reference
+          activity_id: activityData.id, // Use the actual activity ID from the newly created activity
           contractor_id: selectedContractorId,
           quantity: executedQuantity,
           unit: workQuantity.unit
         });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error adding activity to projection:", error);
+        throw error;
+      }
       
       toast({
         title: "Éxito",

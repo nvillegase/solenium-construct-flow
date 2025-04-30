@@ -22,7 +22,7 @@ export default function Construction() {
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState("daily-projection");
 
-  // Fetch contractors using the RLS policy we just created
+  // Fetch contractors using the RLS policy
   const { data: contractorsData, isLoading: isLoadingContractors } = useQuery({
     queryKey: ["contractors"],
     queryFn: async () => {
@@ -50,23 +50,37 @@ export default function Construction() {
     },
   });
 
-  // Fetch activities for the current project
+  // Fetch activities for the current project - now protected by RLS
   const { data: activitiesData, isLoading: isLoadingActivities, refetch: refetchActivities } = useQuery({
     queryKey: ["activities", currentProject?.id],
     queryFn: async () => {
       if (!currentProject?.id) return [];
       
-      const { data, error } = await supabase
-        .from("activities")
-        .select(`
-          *,
-          contractors:contractor_id(name)
-        `)
-        .eq("project_id", currentProject.id)
-        .order("name");
-      
-      if (error) throw error;
-      return data;
+      try {
+        const { data, error } = await supabase
+          .from("activities")
+          .select(`
+            *,
+            contractors:contractor_id(name)
+          `)
+          .eq("project_id", currentProject.id)
+          .order("name");
+        
+        if (error) {
+          console.error("Error fetching activities:", error);
+          toast({
+            title: "Error",
+            description: "No se pudieron cargar las actividades. Verifique sus permisos.",
+            variant: "destructive"
+          });
+          throw error;
+        }
+        
+        return data || [];
+      } catch (err) {
+        console.error("Activities fetch error:", err);
+        return [];
+      }
     },
     enabled: !!currentProject?.id,
   });

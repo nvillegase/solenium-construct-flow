@@ -24,18 +24,21 @@ interface DailyExecutionProps {
   activities?: Activity[];
   isLoadingActivities: boolean;
   refetchExecutions: () => void;
+  selectedExecutionDate: Date;
+  setSelectedExecutionDate: (date: Date) => void;
 }
 
 export function DailyExecutionComponent({
   currentProject,
   activities,
   isLoadingActivities,
-  refetchExecutions
+  refetchExecutions,
+  selectedExecutionDate,
+  setSelectedExecutionDate
 }: DailyExecutionProps) {
   const { toast } = useToast();
   const [isViewingExecutions, setIsViewingExecutions] = useState(false);
   const [isCreatingExecution, setIsCreatingExecution] = useState(false);
-  const [selectedExecutionDate, setSelectedExecutionDate] = useState<Date>(new Date());
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [executedQuantity, setExecutedQuantity] = useState<number>(0);
   const [notes, setNotes] = useState<string>("");

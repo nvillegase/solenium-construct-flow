@@ -140,6 +140,8 @@ export default function Construction() {
               activities={activities}
               isLoadingActivities={isLoadingActivities}
               refetchExecutions={refetchActivities}
+              selectedExecutionDate={selectedExecutionDate}
+              setSelectedExecutionDate={setSelectedExecutionDate}
             />
           </TabsContent>
         </Tabs>

@@ -53,7 +53,6 @@ export function DailyProjectionComponent({
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isCreatingProjection, setIsCreatingProjection] = useState(false);
   const [selectedProjection, setSelectedProjection] = useState<ProjectionData | null>(null);
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [executedQuantity, setExecutedQuantity] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedWorkQuantityId, setSelectedWorkQuantityId] = useState<string>("");
@@ -185,14 +184,32 @@ export function DailyProjectionComponent({
     }
   };
 
-  const handleAddActivityToProjection = async (projectionId: string, activityId: string, contractorId: string, quantity: number) => {
-    if (!currentProject?.id) return;
+  const handleAddActivityToProjection = async (projectionId: string) => {
+    if (!currentProject?.id || !selectedWorkQuantityId) return;
     
     try {
       setIsSubmitting(true);
       
-      const activity = activities?.find(a => a.id === activityId);
-      if (!activity) throw new Error("Actividad no encontrada");
+      const workQuantity = workQuantities.find(wq => wq.id === selectedWorkQuantityId);
+      if (!workQuantity) throw new Error("Cantidad de obra no encontrada");
+      
+      // Find a matching activity or create a placeholder
+      let activityId = "";
+      let contractorId = "";
+      
+      // If we have a matching activity for this work quantity, use it
+      const matchingActivity = activities?.find(a => a.workQuantityId === selectedWorkQuantityId);
+      
+      if (matchingActivity) {
+        activityId = matchingActivity.id;
+        contractorId = matchingActivity.contractorId;
+      } else if (activities && activities.length > 0 && contractors && contractors.length > 0) {
+        // Use the first activity and contractor as fallback
+        activityId = activities[0].id;
+        contractorId = contractors[0].id;
+      } else {
+        throw new Error("No hay actividades o contratistas disponibles");
+      }
       
       const { error } = await supabase
         .from("daily_projection_activities")
@@ -200,8 +217,8 @@ export function DailyProjectionComponent({
           daily_projection_id: projectionId,
           activity_id: activityId,
           contractor_id: contractorId,
-          quantity: quantity,
-          unit: activity.unit
+          quantity: executedQuantity,
+          unit: workQuantity.unit
         });
       
       if (error) throw error;
@@ -231,8 +248,12 @@ export function DailyProjectionComponent({
   useEffect(() => {
     if (selectedProjection) {
       setSelectedWorkQuantityId("");
+      setExecutedQuantity(0);
     }
   }, [selectedProjection, currentProject?.id]);
+
+  // Find selected work quantity details
+  const selectedWorkQuantity = workQuantities.find(wq => wq.id === selectedWorkQuantityId);
 
   return (
     <Card>
@@ -354,7 +375,7 @@ export function DailyProjectionComponent({
           <DialogHeader>
             <DialogTitle>Agregar Actividad a la Proyección</DialogTitle>
             <DialogDescription>
-              Seleccione una actividad para agregar a la proyección del día {selectedProjection?.date ? format(new Date(selectedProjection.date), "PPP", { locale: es }) : ""}
+              Seleccione una cantidad de obra para agregar a la proyección del día {selectedProjection?.date ? format(new Date(selectedProjection.date), "PPP", { locale: es }) : ""}
             </DialogDescription>
           </DialogHeader>
           
@@ -389,50 +410,16 @@ export function DailyProjectionComponent({
               </Select>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="activity">Actividad</Label>
-              <Select onValueChange={(value) => setSelectedActivity(activities?.find(a => a.id === value) || null)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar actividad" />
-                </SelectTrigger>
-                <SelectContent>
-                  {activities?.map((activity) => (
-                    <SelectItem key={activity.id} value={activity.id}>
-                      {activity.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {selectedActivity && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="contractor">Contratista</Label>
-                  <Select defaultValue={selectedActivity.contractorId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar contratista" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {contractors?.map((contractor) => (
-                        <SelectItem key={contractor.id} value={contractor.id}>
-                          {contractor.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="quantity">Cantidad ({selectedActivity.unit})</Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    value={executedQuantity}
-                    onChange={(e) => setExecutedQuantity(Number(e.target.value))}
-                  />
-                </div>
-              </>
+            {selectedWorkQuantity && (
+              <div className="space-y-2">
+                <Label htmlFor="quantity">Cantidad ({selectedWorkQuantity.unit})</Label>
+                <Input
+                  id="quantity"
+                  type="number"
+                  value={executedQuantity}
+                  onChange={(e) => setExecutedQuantity(Number(e.target.value))}
+                />
+              </div>
             )}
           </div>
           
@@ -442,19 +429,14 @@ export function DailyProjectionComponent({
             </Button>
             <Button
               onClick={() => {
-                if (selectedProjection && selectedActivity) {
-                  handleAddActivityToProjection(
-                    selectedProjection.id,
-                    selectedActivity.id,
-                    selectedActivity.contractorId,
-                    executedQuantity
-                  );
+                if (selectedProjection) {
+                  handleAddActivityToProjection(selectedProjection.id);
                   setSelectedProjection(null);
-                  setSelectedActivity(null);
+                  setSelectedWorkQuantityId("");
                   setExecutedQuantity(0);
                 }
               }}
-              disabled={!selectedActivity || executedQuantity <= 0 || isSubmitting}
+              disabled={!selectedWorkQuantityId || executedQuantity <= 0 || isSubmitting}
             >
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Agregar Actividad

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -56,6 +57,7 @@ export function DailyProjectionComponent({
   const [executedQuantity, setExecutedQuantity] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedWorkQuantityId, setSelectedWorkQuantityId] = useState<string>("");
+  const [selectedContractorId, setSelectedContractorId] = useState<string>("");
   
   // Fetch project work quantities
   const { data: workQuantities = [], isLoading: isLoadingWorkQuantities } = useQuery({
@@ -87,6 +89,27 @@ export function DailyProjectionComponent({
       }));
     },
     enabled: !!currentProject?.id,
+  });
+  
+  // Fetch contractors
+  const { data: contractorsList = [], isLoading: isLoadingContractorsList } = useQuery({
+    queryKey: ['contractorsList'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contractors')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      
+      return data.map(contractor => ({
+        id: contractor.id,
+        name: contractor.name,
+        contactPerson: contractor.contact_person,
+        contactEmail: contractor.contact_email,
+        contactPhone: contractor.contact_phone
+      }));
+    }
   });
   
   // Fetch daily projections for the current project and selected date
@@ -185,7 +208,14 @@ export function DailyProjectionComponent({
   };
 
   const handleAddActivityToProjection = async (projectionId: string) => {
-    if (!currentProject?.id || !selectedWorkQuantityId) return;
+    if (!currentProject?.id || !selectedWorkQuantityId || !selectedContractorId) {
+      toast({
+        title: "Error",
+        description: "Por favor, seleccione una cantidad de obra y un contratista",
+        variant: "destructive",
+      });
+      return;
+    }
     
     try {
       setIsSubmitting(true);
@@ -193,30 +223,12 @@ export function DailyProjectionComponent({
       const workQuantity = workQuantities.find(wq => wq.id === selectedWorkQuantityId);
       if (!workQuantity) throw new Error("Cantidad de obra no encontrada");
       
-      // Find a matching activity or create a placeholder
-      let activityId = "";
-      let contractorId = "";
-      
-      // If we have a matching activity for this work quantity, use it
-      const matchingActivity = activities?.find(a => a.workQuantityId === selectedWorkQuantityId);
-      
-      if (matchingActivity) {
-        activityId = matchingActivity.id;
-        contractorId = matchingActivity.contractorId;
-      } else if (activities && activities.length > 0 && contractors && contractors.length > 0) {
-        // Use the first activity and contractor as fallback
-        activityId = activities[0].id;
-        contractorId = contractors[0].id;
-      } else {
-        throw new Error("No hay actividades o contratistas disponibles");
-      }
-      
       const { error } = await supabase
         .from("daily_projection_activities")
         .insert({
           daily_projection_id: projectionId,
-          activity_id: activityId,
-          contractor_id: contractorId,
+          activity_id: selectedWorkQuantityId, // Using the workQuantityId as the activity reference
+          contractor_id: selectedContractorId,
           quantity: executedQuantity,
           unit: workQuantity.unit
         });
@@ -232,6 +244,12 @@ export function DailyProjectionComponent({
       refetchDailyProjections();
       // Also call the parent refetch if provided
       if (refetchProjections) refetchProjections();
+      
+      // Reset the form
+      setSelectedWorkQuantityId("");
+      setSelectedContractorId("");
+      setExecutedQuantity(0);
+      setSelectedProjection(null);
     } catch (error) {
       console.error("Error adding activity to projection:", error);
       toast({
@@ -248,6 +266,7 @@ export function DailyProjectionComponent({
   useEffect(() => {
     if (selectedProjection) {
       setSelectedWorkQuantityId("");
+      setSelectedContractorId("");
       setExecutedQuantity(0);
     }
   }, [selectedProjection, currentProject?.id]);
@@ -410,6 +429,36 @@ export function DailyProjectionComponent({
               </Select>
             </div>
             
+            <div className="space-y-2">
+              <Label htmlFor="contractor">Contratista</Label>
+              <Select 
+                value={selectedContractorId} 
+                onValueChange={setSelectedContractorId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar contratista" />
+                </SelectTrigger>
+                <SelectContent>
+                  {isLoadingContractorsList ? (
+                    <div className="flex items-center justify-center p-2">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <span>Cargando...</span>
+                    </div>
+                  ) : contractorsList.length > 0 ? (
+                    contractorsList.map((contractor) => (
+                      <SelectItem key={contractor.id} value={contractor.id}>
+                        {contractor.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-2 text-center text-muted-foreground">
+                      No hay contratistas disponibles
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            
             {selectedWorkQuantity && (
               <div className="space-y-2">
                 <Label htmlFor="quantity">Cantidad ({selectedWorkQuantity.unit})</Label>
@@ -431,12 +480,9 @@ export function DailyProjectionComponent({
               onClick={() => {
                 if (selectedProjection) {
                   handleAddActivityToProjection(selectedProjection.id);
-                  setSelectedProjection(null);
-                  setSelectedWorkQuantityId("");
-                  setExecutedQuantity(0);
                 }
               }}
-              disabled={!selectedWorkQuantityId || executedQuantity <= 0 || isSubmitting}
+              disabled={!selectedWorkQuantityId || !selectedContractorId || executedQuantity <= 0 || isSubmitting}
             >
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Agregar Actividad

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -11,25 +12,41 @@ import { DailyExecutionComponent } from "@/components/construction/DailyExecutio
 import { supabase } from "@/integrations/supabase/client";
 import { Activity, Contractor } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function Construction() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const { projects, selectedProjectId, setSelectedProjectId, isLoading: isLoadingProjects } = useProjects();
   const currentProject = projects.find(p => p.id === selectedProjectId);
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState("daily-projection");
 
-  // Fetch contractors
+  // Fetch contractors using the RLS policy we just created
   const { data: contractorsData, isLoading: isLoadingContractors } = useQuery({
     queryKey: ["contractors"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("contractors")
-        .select("*")
-        .order("name");
-      
-      if (error) throw error;
-      return data;
+      try {
+        const { data, error } = await supabase
+          .from("contractors")
+          .select("*")
+          .order("name");
+        
+        if (error) {
+          console.error("Error fetching contractors:", error);
+          toast({
+            title: "Error",
+            description: "No se pudieron cargar los contratistas. Verifique sus permisos.",
+            variant: "destructive"
+          });
+          throw error;
+        }
+        
+        return data || [];
+      } catch (err) {
+        console.error("Contractors fetch error:", err);
+        return [];
+      }
     },
   });
 

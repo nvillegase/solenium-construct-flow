@@ -737,6 +737,10 @@ export type Database = {
         Args: { user_id: string }
         Returns: boolean
       }
+      can_read_contractors: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       get_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string

@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { PlusCircle, Loader2 } from "lucide-react";
@@ -12,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useToast } from "@/hooks/use-toast";
-import { Activity, Contractor, DailyProjection } from "@/lib/types";
+import { Activity, Contractor, DailyProjection, WorkQuantity } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
@@ -57,6 +56,39 @@ export function DailyProjectionComponent({
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [executedQuantity, setExecutedQuantity] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedWorkQuantityId, setSelectedWorkQuantityId] = useState<string>("");
+  
+  // Fetch project work quantities
+  const { data: workQuantities = [], isLoading: isLoadingWorkQuantities } = useQuery({
+    queryKey: ['workQuantities', currentProject?.id],
+    queryFn: async () => {
+      if (!currentProject?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('project_work_quantities')
+        .select(`
+          id,
+          quantity,
+          work_quantity_id,
+          work_quantity_catalog (
+            description,
+            unit
+          )
+        `)
+        .eq('project_id', currentProject.id);
+      
+      if (error) throw error;
+      
+      return data.map(item => ({
+        id: item.id,
+        description: item.work_quantity_catalog.description,
+        unit: item.work_quantity_catalog.unit,
+        quantity: item.quantity,
+        workQuantityId: item.work_quantity_id
+      }));
+    },
+    enabled: !!currentProject?.id,
+  });
   
   // Fetch daily projections for the current project and selected date
   const { data: projections, isLoading: isLoadingProjections, refetch: refetchDailyProjections } = useQuery({
@@ -195,6 +227,13 @@ export function DailyProjectionComponent({
     }
   };
 
+  // Reset selected work quantity when modal opens or project changes
+  useEffect(() => {
+    if (selectedProjection) {
+      setSelectedWorkQuantityId("");
+    }
+  }, [selectedProjection, currentProject?.id]);
+
   return (
     <Card>
       <CardHeader>
@@ -320,6 +359,36 @@ export function DailyProjectionComponent({
           </DialogHeader>
           
           <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="workQuantity">Cantidad de Obra</Label>
+              <Select 
+                value={selectedWorkQuantityId} 
+                onValueChange={setSelectedWorkQuantityId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar cantidad de obra" />
+                </SelectTrigger>
+                <SelectContent>
+                  {isLoadingWorkQuantities ? (
+                    <div className="flex items-center justify-center p-2">
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      <span>Cargando...</span>
+                    </div>
+                  ) : workQuantities.length > 0 ? (
+                    workQuantities.map((workQuantity) => (
+                      <SelectItem key={workQuantity.id} value={workQuantity.id}>
+                        {workQuantity.description} ({workQuantity.unit})
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-2 text-center text-muted-foreground">
+                      No hay cantidades de obra disponibles
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="activity">Actividad</Label>
               <Select onValueChange={(value) => setSelectedActivity(activities?.find(a => a.id === value) || null)}>

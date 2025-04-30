@@ -14,6 +14,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { useToast } from "@/hooks/use-toast";
 import { Activity, Contractor, DailyProjection } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 interface DailyProjectionProps {
   currentProject: { id: string; name: string };
@@ -57,6 +58,54 @@ export function DailyProjectionComponent({
   const [executedQuantity, setExecutedQuantity] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Fetch daily projections for the current project and selected date
+  const { data: projections, isLoading: isLoadingProjections, refetch: refetchDailyProjections } = useQuery({
+    queryKey: ["daily-projections", currentProject?.id, format(selectedDate, "yyyy-MM-dd")],
+    queryFn: async () => {
+      if (!currentProject?.id) return [];
+      
+      const formattedDate = format(selectedDate, "yyyy-MM-dd");
+      const { data, error } = await supabase
+        .from("daily_projections")
+        .select(`
+          id,
+          project_id,
+          date,
+          is_execution_complete,
+          daily_projection_activities (
+            id,
+            activity_id,
+            contractor_id,
+            quantity,
+            unit,
+            activities:activity_id (name),
+            contractors:contractor_id (name)
+          )
+        `)
+        .eq("project_id", currentProject.id)
+        .eq("date", formattedDate);
+      
+      if (error) throw error;
+      
+      // Transform data to match our ProjectionData type
+      return data.map(projection => ({
+        id: projection.id,
+        projectId: projection.project_id,
+        date: projection.date,
+        isExecutionComplete: projection.is_execution_complete,
+        activities: projection.daily_projection_activities.map(activity => ({
+          activityId: activity.activity_id,
+          contractorId: activity.contractor_id,
+          quantity: activity.quantity,
+          unit: activity.unit,
+          name: activity.activities?.name,
+          contractorName: activity.contractors?.name
+        }))
+      }));
+    },
+    enabled: !!currentProject?.id
+  });
+  
   const handleCreateProjection = async () => {
     if (!currentProject?.id) {
       toast({
@@ -88,7 +137,10 @@ export function DailyProjectionComponent({
       });
       
       setIsCreatingProjection(false);
-      refetchProjections();
+      // Refetch the projections to update the list
+      refetchDailyProjections();
+      // Also call the parent refetch if provided
+      if (refetchProjections) refetchProjections();
     } catch (error) {
       console.error("Error creating projection:", error);
       toast({
@@ -127,7 +179,10 @@ export function DailyProjectionComponent({
         description: "Actividad agregada a la proyección",
       });
       
-      refetchProjections();
+      // Refetch projections after adding activity
+      refetchDailyProjections();
+      // Also call the parent refetch if provided
+      if (refetchProjections) refetchProjections();
     } catch (error) {
       console.error("Error adding activity to projection:", error);
       toast({
@@ -159,12 +214,12 @@ export function DailyProjectionComponent({
         </div>
       </CardHeader>
       <CardContent>
-        {isLoadingActivities ? (
+        {isLoadingProjections || isLoadingActivities ? (
           <div className="flex justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
-        ) : activities && activities.length > 0 ? (
-          activities.map((projection) => (
+        ) : projections && projections.length > 0 ? (
+          projections.map((projection) => (
             <Card key={projection.id} className="mb-6">
               <CardHeader>
                 <div className="flex justify-between items-center">
@@ -174,15 +229,7 @@ export function DailyProjectionComponent({
                   <Button 
                     variant="outline" 
                     onClick={() => {
-                      // Create a projection data object from the activity
-                      const projectionData: ProjectionData = {
-                        id: projection.id,
-                        projectId: projection.projectId,
-                        date: projection.date,
-                        activities: [], // Empty array as we're just using this to store the ID
-                        isExecutionComplete: false
-                      };
-                      setSelectedProjection(projectionData);
+                      setSelectedProjection(projection);
                       setIsCreatingProjection(true);
                     }}
                   >
@@ -192,10 +239,32 @@ export function DailyProjectionComponent({
                 </div>
               </CardHeader>
               <CardContent>
-                {/* This part needs to be updated to work with the actual projection data */}
-                <div className="text-center py-4 text-muted-foreground">
-                  Datos de actividad disponibles
-                </div>
+                {projection.activities.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Actividad</TableHead>
+                        <TableHead>Contratista</TableHead>
+                        <TableHead>Cantidad</TableHead>
+                        <TableHead>Unidad</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {projection.activities.map((activity, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{activity.name}</TableCell>
+                          <TableCell>{activity.contractorName}</TableCell>
+                          <TableCell>{activity.quantity}</TableCell>
+                          <TableCell>{activity.unit}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No hay actividades programadas para esta proyección
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))

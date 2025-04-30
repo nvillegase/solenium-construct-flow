@@ -1,23 +1,23 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button"; // Add Button import
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProjects } from "@/contexts/ProjectContext";
 import AppLayout from "@/components/layout/AppLayout";
 import { DailyProjectionComponent } from "@/components/construction/DailyProjection";
 import { DailyExecutionComponent } from "@/components/construction/DailyExecution";
 import { supabase } from "@/integrations/supabase/client";
-import { Activity, Contractor } from "@/lib/types"; // Import types
+import { Activity, Contractor } from "@/lib/types";
 
 export default function Construction() {
   const { user } = useAuth();
   const { projects, selectedProjectId, setSelectedProjectId } = useProjects();
   const currentProject = projects.find(p => p.id === selectedProjectId);
   const navigate = useNavigate();
-  const [selectedTab, setSelectedTab] = React.useState("daily-projection");
+  const [selectedTab, setSelectedTab] = useState("daily-projection");
 
   // Fetch contractors
   const { data: contractorsData, isLoading: isLoadingContractors } = useQuery({
@@ -34,7 +34,7 @@ export default function Construction() {
   });
 
   // Fetch activities for the current project
-  const { data: activitiesData, isLoading: isLoadingActivities } = useQuery({
+  const { data: activitiesData, isLoading: isLoadingActivities, refetch: refetchActivities } = useQuery({
     queryKey: ["activities", currentProject?.id],
     queryFn: async () => {
       if (!currentProject?.id) return [];
@@ -108,9 +108,7 @@ export default function Construction() {
               contractors={contractors}
               isLoadingActivities={isLoadingActivities}
               isLoadingContractors={isLoadingContractors}
-              refetchProjections={() => {
-                // Here you would add the refetch function
-              }}
+              refetchProjections={refetchActivities}
             />
           </TabsContent>
           
@@ -119,9 +117,7 @@ export default function Construction() {
               currentProject={currentProject}
               activities={activities}
               isLoadingActivities={isLoadingActivities}
-              refetchExecutions={() => {
-                // Here you would add the refetch function
-              }}
+              refetchExecutions={refetchActivities}
             />
           </TabsContent>
         </Tabs>

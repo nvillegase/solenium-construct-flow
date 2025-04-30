@@ -729,6 +729,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_construction: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
       can_manage_work_quantity_materials: {
         Args: { user_id: string }
         Returns: boolean

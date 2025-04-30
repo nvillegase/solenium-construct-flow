@@ -1,7 +1,6 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,10 +8,12 @@ import { useProjects } from "@/contexts/ProjectContext";
 import AppLayout from "@/components/layout/AppLayout";
 import { DailyProjectionComponent } from "@/components/construction/DailyProjection";
 import { DailyExecutionComponent } from "@/components/construction/DailyExecution";
-import { supabase } from "@/integrations/supabase/client";
-import { Activity, Contractor } from "@/lib/types";
+import { useActivities } from "@/hooks/useActivities";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { Contractor } from "@/lib/types";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Construction() {
   const { user } = useAuth();
@@ -50,56 +51,13 @@ export default function Construction() {
     },
   });
 
-  // Fetch activities for the current project - now protected by RLS
-  const { data: activitiesData, isLoading: isLoadingActivities, refetch: refetchActivities } = useQuery({
-    queryKey: ["activities", currentProject?.id],
-    queryFn: async () => {
-      if (!currentProject?.id) return [];
-      
-      try {
-        const { data, error } = await supabase
-          .from("activities")
-          .select(`
-            *,
-            contractors:contractor_id(name)
-          `)
-          .eq("project_id", currentProject.id)
-          .order("name");
-        
-        if (error) {
-          console.error("Error fetching activities:", error);
-          toast({
-            title: "Error",
-            description: "No se pudieron cargar las actividades. Verifique sus permisos.",
-            variant: "destructive"
-          });
-          throw error;
-        }
-        
-        return data || [];
-      } catch (err) {
-        console.error("Activities fetch error:", err);
-        return [];
-      }
-    },
-    enabled: !!currentProject?.id,
-  });
-
-  // Transform data to match our Activity type
-  const activities: Activity[] = activitiesData?.map(item => ({
-    id: item.id,
-    projectId: item.project_id,
-    workQuantityId: item.project_work_quantity_id,
-    name: item.name,
-    contractorId: item.contractor_id,
-    contractorName: item.contractors?.name,
-    estimatedQuantity: item.estimated_quantity,
-    executedQuantity: item.executed_quantity,
-    unit: item.unit,
-    date: item.date,
-    notes: item.notes || undefined,
-    progress: item.progress,
-  })) || [];
+  // Use the improved useActivities hook
+  const { 
+    activities, 
+    isLoading: isLoadingActivities, 
+    error: activitiesError, 
+    refetch: refetchActivities 
+  } = useActivities(currentProject?.id);
 
   // Transform data to match our Contractor type
   const contractors: Contractor[] = contractorsData?.map(item => ({

@@ -22,7 +22,7 @@ export const useActivities = (projectId?: string) => {
           .from("activities")
           .select(`
             *,
-            contractors:contractor_id(name)
+            contractors:contractor_id(id, name)
           `)
           .eq("project_id", projectId)
           .order("name");
@@ -44,7 +44,7 @@ export const useActivities = (projectId?: string) => {
           workQuantityId: item.project_work_quantity_id,
           name: item.name,
           contractorId: item.contractor_id,
-          contractorName: item.contractors?.name,
+          contractorName: item.contractors?.name || "Sin contratista",
           estimatedQuantity: item.estimated_quantity,
           executedQuantity: item.executed_quantity,
           unit: item.unit,

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -189,7 +190,7 @@ export function DailyExecutionComponent({
                   {activities.map((execution) => (
                     <TableRow key={execution.id}>
                       <TableCell>{execution.name}</TableCell>
-                      <TableCell>{execution.contractorId}</TableCell>
+                      <TableCell>{execution.contractorName}</TableCell>
                       <TableCell>{execution.executedQuantity}</TableCell>
                       <TableCell>
                         {execution.notes ? (
@@ -260,7 +261,7 @@ export function DailyExecutionComponent({
                   <div>
                     <Label>Contratista</Label>
                     <div className="p-2 border rounded-md mt-1">
-                      {selectedActivity.contractorId || "No asignado"}
+                      {selectedActivity.contractorName || "No asignado"}
                     </div>
                   </div>
                   <div>

@@ -1,3 +1,4 @@
+
 export type UserRole = 'Diseñador' | 'Suministro' | 'Almacenista' | 'Residente' | 'Supervisor';
 
 export interface User {

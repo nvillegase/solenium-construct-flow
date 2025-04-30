@@ -146,6 +146,7 @@ export type Database = {
           issue_category: Database["public"]["Enums"]["issue_category"] | null
           issue_other_description: string | null
           notes: string | null
+          photos: string[] | null
           project_id: string
         }
         Insert: {
@@ -157,6 +158,7 @@ export type Database = {
           issue_category?: Database["public"]["Enums"]["issue_category"] | null
           issue_other_description?: string | null
           notes?: string | null
+          photos?: string[] | null
           project_id: string
         }
         Update: {
@@ -168,6 +170,7 @@ export type Database = {
           issue_category?: Database["public"]["Enums"]["issue_category"] | null
           issue_other_description?: string | null
           notes?: string | null
+          photos?: string[] | null
           project_id?: string
         }
         Relationships: [

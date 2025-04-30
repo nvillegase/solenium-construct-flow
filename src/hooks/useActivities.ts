@@ -4,7 +4,7 @@ import { Activity } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-export const useActivities = (projectId?: string) => {
+export const useActivities = (projectId?: string, date?: string) => {
   const { toast } = useToast();
 
   const { 
@@ -13,19 +13,24 @@ export const useActivities = (projectId?: string) => {
     error, 
     refetch 
   } = useQuery({
-    queryKey: ["activities", projectId],
+    queryKey: ["activities", projectId, date],
     queryFn: async () => {
       if (!projectId) return [];
       
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from("activities")
           .select(`
             *,
             contractors:contractor_id(id, name)
           `)
-          .eq("project_id", projectId)
-          .order("name");
+          .eq("project_id", projectId);
+        
+        if (date) {
+          query = query.eq("date", date);
+        }
+        
+        const { data, error } = await query.order("name");
         
         if (error) {
           console.error("Error fetching activities:", error);

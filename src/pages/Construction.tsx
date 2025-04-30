@@ -14,6 +14,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Contractor } from "@/lib/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 
 export default function Construction() {
   const { user } = useAuth();
@@ -22,7 +23,11 @@ export default function Construction() {
   const currentProject = projects.find(p => p.id === selectedProjectId);
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState("daily-projection");
+  const [selectedExecutionDate, setSelectedExecutionDate] = useState<Date>(new Date());
 
+  // Format the date for API queries
+  const formattedDate = format(selectedExecutionDate, "yyyy-MM-dd");
+  
   // Fetch contractors using the RLS policy
   const { data: contractorsData, isLoading: isLoadingContractors } = useQuery({
     queryKey: ["contractors"],
@@ -51,13 +56,16 @@ export default function Construction() {
     },
   });
 
-  // Use the improved useActivities hook
+  // Use the improved useActivities hook with date parameter
   const { 
     activities, 
     isLoading: isLoadingActivities, 
     error: activitiesError, 
     refetch: refetchActivities 
-  } = useActivities(currentProject?.id);
+  } = useActivities(
+    currentProject?.id, 
+    selectedTab === "daily-execution" ? formattedDate : undefined
+  );
 
   // Transform data to match our Contractor type
   const contractors: Contractor[] = contractorsData?.map(item => ({

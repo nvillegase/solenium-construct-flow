@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Activity } from "@/lib/types";
-import { supabase } from "@/integrations/supabase/client";
+import { mockActivities, mockContractors } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 
 export const useActivities = (projectId?: string, date?: string) => {
@@ -18,47 +18,36 @@ export const useActivities = (projectId?: string, date?: string) => {
       if (!projectId) return [];
       
       try {
-        let query = supabase
-          .from("activities")
-          .select(`
-            *,
-            contractors:contractor_id(id, name)
-          `)
-          .eq("project_id", projectId);
+        // Simulate async loading
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        let filteredActivities = mockActivities.filter(activity => 
+          activity.projectId === projectId
+        );
         
         if (date) {
-          query = query.eq("date", date);
+          filteredActivities = filteredActivities.filter(activity => 
+            activity.date === date
+          );
         }
         
-        const { data, error } = await query.order("name");
+        // Enrich with contractor names
+        const enrichedActivities = filteredActivities.map(activity => {
+          const contractor = mockContractors.find(c => c.id === activity.contractorId);
+          return {
+            ...activity,
+            contractorName: contractor?.name || activity.contractorId
+          };
+        });
         
-        if (error) {
-          console.error("Error fetching activities:", error);
-          toast({
-            title: "Error",
-            description: "No se pudieron cargar las actividades. Verifique sus permisos.",
-            variant: "destructive"
-          });
-          throw error;
-        }
-        
-        // Transform data to match our Activity type
-        return data.map(item => ({
-          id: item.id,
-          projectId: item.project_id,
-          workQuantityId: item.project_work_quantity_id,
-          name: item.name,
-          contractorId: item.contractor_id,
-          contractorName: item.contractors?.name || "Sin contratista",
-          estimatedQuantity: item.estimated_quantity,
-          executedQuantity: item.executed_quantity,
-          unit: item.unit,
-          date: item.date,
-          notes: item.notes || undefined,
-          progress: item.progress,
-        })) as Activity[];
+        return enrichedActivities;
       } catch (err) {
         console.error("Activities fetch error:", err);
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar las actividades.",
+          variant: "destructive"
+        });
         return [];
       }
     },

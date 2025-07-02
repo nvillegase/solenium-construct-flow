@@ -12,7 +12,7 @@ import { useActivities } from "@/hooks/useActivities";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { Contractor } from "@/lib/types";
-import { supabase } from "@/integrations/supabase/client";
+import { mockContractors } from "@/lib/mock-data";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 
@@ -28,29 +28,21 @@ export default function Construction() {
   // Format the date for API queries
   const formattedDate = format(selectedExecutionDate, "yyyy-MM-dd");
   
-  // Fetch contractors using the RLS policy
+  // Fetch contractors using mock data
   const { data: contractorsData, isLoading: isLoadingContractors } = useQuery({
     queryKey: ["contractors"],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase
-          .from("contractors")
-          .select("*")
-          .order("name");
-        
-        if (error) {
-          console.error("Error fetching contractors:", error);
-          toast({
-            title: "Error",
-            description: "No se pudieron cargar los contratistas. Verifique sus permisos.",
-            variant: "destructive"
-          });
-          throw error;
-        }
-        
-        return data || [];
+        // Simulate async loading
+        await new Promise(resolve => setTimeout(resolve, 100));
+        return mockContractors;
       } catch (err) {
         console.error("Contractors fetch error:", err);
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los contratistas.",
+          variant: "destructive"
+        });
         return [];
       }
     },
@@ -68,13 +60,7 @@ export default function Construction() {
   );
 
   // Transform data to match our Contractor type
-  const contractors: Contractor[] = contractorsData?.map(item => ({
-    id: item.id,
-    name: item.name,
-    contactPerson: item.contact_person,
-    contactEmail: item.contact_email,
-    contactPhone: item.contact_phone,
-  })) || [];
+  const contractors: Contractor[] = contractorsData || [];
 
   if (!currentProject) {
     return (

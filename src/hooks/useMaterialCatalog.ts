@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { mockMaterialCatalog } from "@/lib/mock-data";
 import { useToast } from "@/components/ui/use-toast";
 
 export interface MaterialCatalog {
@@ -18,13 +18,11 @@ export const useMaterialCatalog = () => {
   useEffect(() => {
     const fetchMaterialCatalog = async () => {
       try {
-        const { data, error } = await supabase
-          .from('material_catalog')
-          .select('id, name, unit');
-
-        if (error) throw error;
-
-        setItems(data);
+        setIsLoading(true);
+        // Simulate async loading
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        setItems(mockMaterialCatalog);
         setError(null);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Error al cargar el catálogo de materiales';

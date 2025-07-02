@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Project } from "@/lib/types";
 import { useAuth } from "./AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { mockProjects } from "@/lib/mock-data";
 import { useToast } from "@/components/ui/use-toast";
 
 interface ProjectContextType {
@@ -28,6 +28,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     if (!user) {
       setProjects([]);
       setSelectedProjectId(null);
+      setIsLoading(false);
       return;
     }
 
@@ -35,50 +36,21 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       setError(null);
 
-      let query = supabase.from('projects').select('*');
+      // Use mock data instead of Supabase
+      let filteredProjects = mockProjects;
       
       if (user.role !== 'Supervisor') {
         // For non-supervisors, filter by user's assigned projects
-        const { data: userProjects } = await supabase
-          .from('user_projects')
-          .select('project_id')
-          .eq('user_id', user.id);
-          
-        const projectIds = userProjects?.map(up => up.project_id) || [];
-        
-        if (projectIds.length > 0) {
-          query = query.in('id', projectIds);
-        } else {
-          setProjects([]);
-          setIsLoading(false);
-          return;
-        }
+        filteredProjects = mockProjects.filter(project => 
+          user.projectIds.includes(project.id)
+        );
       }
 
-      const { data, error: fetchError } = await query;
+      setProjects(filteredProjects);
 
-      if (fetchError) {
-        throw fetchError;
-      }
-
-      if (data) {
-        const mappedProjects: Project[] = data.map(project => ({
-          id: project.id,
-          name: project.name,
-          location: project.location,
-          startDate: project.start_date,
-          expectedEndDate: project.expected_end_date,
-          status: project.status,
-          progress: project.progress,
-          projectedProgress: project.projected_progress
-        }));
-
-        setProjects(mappedProjects);
-
-        // Set first project as selected if none is selected
-        if (!selectedProjectId && mappedProjects.length > 0) {
-          setSelectedProjectId(mappedProjects[0].id);
-        }
+      // Set first project as selected if none is selected
+      if (!selectedProjectId && filteredProjects.length > 0) {
+        setSelectedProjectId(filteredProjects[0].id);
       }
     } catch (error) {
       console.error('Error fetching projects:', error);

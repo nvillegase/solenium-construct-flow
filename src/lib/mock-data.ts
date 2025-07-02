@@ -1,4 +1,4 @@
-import { User, Project, WorkQuantity, Material, PurchaseOrder, MaterialReception, MaterialDelivery, Activity, DailyExecution, DailyProjection } from './types';
+import { User, Project, WorkQuantity, Material, PurchaseOrder, MaterialReception, MaterialDelivery, Activity, DailyExecution, DailyProjection, Contractor, WorkQuantityCatalog } from './types';
 
 export const mockUsers: User[] = [
   {
@@ -592,4 +592,145 @@ export const mockDailyProjections: DailyProjection[] = [
     ],
     isExecutionComplete: false
   },
+];
+
+export const mockMaterialCatalog = [
+  { id: 'cat-mat-1', name: 'Cemento Portland Tipo I', unit: 'tonelada' },
+  { id: 'cat-mat-2', name: 'Acero de refuerzo corrugado', unit: 'tonelada' },
+  { id: 'cat-mat-3', name: 'Bloque de concreto #4', unit: 'unidad' },
+  { id: 'cat-mat-4', name: 'Mortero de pega', unit: 'saco' },
+  { id: 'cat-mat-5', name: 'Cable THHN #12', unit: 'metro' },
+  { id: 'cat-mat-6', name: 'Tubería conduit PVC', unit: 'metro' },
+  { id: 'cat-mat-7', name: 'Cerámica 45x45', unit: 'm2' },
+  { id: 'cat-mat-8', name: 'Boquilla para cerámica', unit: 'saco' },
+  { id: 'cat-mat-9', name: 'Panel Solar 450W', unit: 'panel' },
+  { id: 'cat-mat-10', name: 'Inversor 5kW', unit: 'unidad' },
+  { id: 'cat-mat-11', name: 'Perfiles metálicos IPE 200', unit: 'kg' },
+  { id: 'cat-mat-12', name: 'Pernos de anclaje', unit: 'und' },
+  { id: 'cat-mat-13', name: 'Lámina metálica', unit: 'm2' },
+  { id: 'cat-mat-14', name: 'Pintura anticorrosiva', unit: 'galón' }
+];
+
+export const mockWorkQuantityCatalog: WorkQuantityCatalog[] = [
+  { id: 'cat-1', description: 'Excavación para cimientos', unit: 'm3', category: 'Movimiento de tierras' },
+  { id: 'cat-2', description: 'Construcción de muros de contención', unit: 'm2', category: 'Estructura' },
+  { id: 'cat-3', description: 'Instalación de sistema eléctrico', unit: 'punto', category: 'Instalaciones' },
+  { id: 'cat-4', description: 'Colocación de pisos', unit: 'm2', category: 'Acabados' },
+  { id: 'cat-5', description: 'Instalación de paneles solares', unit: 'panel', category: 'Instalaciones' },
+  { id: 'cat-6', description: 'Montaje de estructura metálica', unit: 'kg', category: 'Estructura' },
+  { id: 'cat-7', description: 'Construcción de cerramientos', unit: 'm2', category: 'Estructura' }
+];
+
+export const mockContractors: Contractor[] = [
+  {
+    id: 'contractor-1',
+    name: 'Excavaciones S.A.',
+    contactPerson: 'Juan Pérez',
+    contactEmail: 'juan@excavaciones.com',
+    contactPhone: '+57 300 123 4567'
+  },
+  {
+    id: 'contractor-2',
+    name: 'Construcciones Unidas',
+    contactPerson: 'María González',
+    contactEmail: 'maria@construcciones.com',
+    contactPhone: '+57 301 234 5678'
+  },
+  {
+    id: 'contractor-3',
+    name: 'Electromontajes SAS',
+    contactPerson: 'Carlos Rodríguez',
+    contactEmail: 'carlos@electromontajes.com',
+    contactPhone: '+57 302 345 6789'
+  },
+  {
+    id: 'contractor-4',
+    name: 'Pisos y Acabados S.A.',
+    contactPerson: 'Ana López',
+    contactEmail: 'ana@pisos.com',
+    contactPhone: '+57 303 456 7890'
+  },
+  {
+    id: 'contractor-5',
+    name: 'Sistemas Solares Ltda',
+    contactPerson: 'Luis Torres',
+    contactEmail: 'luis@sistemassolares.com',
+    contactPhone: '+57 304 567 8901'
+  },
+  {
+    id: 'contractor-6',
+    name: 'Construyendo SAS',
+    contactPerson: 'Patricia Vega',
+    contactEmail: 'patricia@construyendo.com',
+    contactPhone: '+57 305 678 9012'
+  },
+  {
+    id: 'contractor-7',
+    name: 'OSPINAS',
+    contactPerson: 'Roberto Ospina',
+    contactEmail: 'roberto@ospinas.com',
+    contactPhone: '+57 306 789 0123'
+  }
+];
+
+export const mockActivityMaterials = [
+  { activityId: 'act-1', projectMaterialId: 'mat-1', materialName: 'Cemento Portland Tipo I', quantity: 20, unit: 'tonelada' },
+  { activityId: 'act-1', projectMaterialId: 'mat-2', materialName: 'Acero de refuerzo corrugado', quantity: 15, unit: 'tonelada' },
+  { activityId: 'act-2', projectMaterialId: 'mat-3', materialName: 'Bloque de concreto #4', quantity: 2000, unit: 'unidad' },
+  { activityId: 'act-2', projectMaterialId: 'mat-4', materialName: 'Mortero de pega', quantity: 40, unit: 'saco' },
+  { activityId: 'act-3', projectMaterialId: 'mat-5', materialName: 'Cable THHN #12', quantity: 500, unit: 'metro' },
+  { activityId: 'act-3', projectMaterialId: 'mat-6', materialName: 'Tubería conduit PVC', quantity: 250, unit: 'metro' },
+  { activityId: 'act-4', projectMaterialId: 'mat-7', materialName: 'Cerámica 45x45', quantity: 350, unit: 'm2' },
+  { activityId: 'act-4', projectMaterialId: 'mat-8', materialName: 'Boquilla para cerámica', quantity: 35, unit: 'saco' },
+  { activityId: 'act-5', projectMaterialId: 'mat-9', materialName: 'Panel Solar 450W', quantity: 90, unit: 'panel' },
+  { activityId: 'act-5', projectMaterialId: 'mat-10', materialName: 'Inversor 5kW', quantity: 8, unit: 'unidad' },
+  { activityId: 'act-6', projectMaterialId: 'mat-11', materialName: 'Perfiles metálicos IPE 200', quantity: 2000, unit: 'kg' },
+  { activityId: 'act-6', projectMaterialId: 'mat-12', materialName: 'Pernos de anclaje', quantity: 400, unit: 'und' },
+  { activityId: 'act-7', projectMaterialId: 'mat-13', materialName: 'Lámina metálica', quantity: 600, unit: 'm2' },
+  { activityId: 'act-7', projectMaterialId: 'mat-14', materialName: 'Pintura anticorrosiva', unit: 'galón' }
+];
+
+export const mockWorkQuantityMaterials = [
+  { workQuantityId: 'wq-1', materialIds: ['mat-1', 'mat-2'] },
+  { workQuantityId: 'wq-2', materialIds: ['mat-3', 'mat-4'] },
+  { workQuantityId: 'wq-3', materialIds: ['mat-5', 'mat-6'] },
+  { workQuantityId: 'wq-4', materialIds: ['mat-7', 'mat-8'] },
+  { workQuantityId: 'wq-5', materialIds: ['mat-9', 'mat-10'] },
+  { workQuantityId: 'wq-6', materialIds: ['mat-11', 'mat-12'] },
+  { workQuantityId: 'wq-7', materialIds: ['mat-13', 'mat-14'] }
+];
+
+export const mockDailyProjectionData = [
+  {
+    id: 'daily-proj-1',
+    projectId: 'project-1',
+    date: '2024-12-25',
+    activities: [
+      { activityId: 'act-1', contractorId: 'contractor-1', quantity: 25, unit: 'm3', name: 'Excavación para cimientos', contractorName: 'Excavaciones S.A.' },
+      { activityId: 'act-2', contractorId: 'contractor-2', quantity: 50, unit: 'm2', name: 'Construcción de muros de contención', contractorName: 'Construcciones Unidas' }
+    ],
+    isExecutionComplete: false
+  },
+  {
+    id: 'daily-proj-2',
+    projectId: 'project-2',
+    date: '2024-12-25',
+    activities: [
+      { activityId: 'act-3', contractorId: 'contractor-3', quantity: 30, unit: 'punto', name: 'Instalación de sistema eléctrico', contractorName: 'Electromontajes SAS' }
+    ],
+    isExecutionComplete: false
+  }
+];
+
+export const mockDailyExecutionData = [
+  {
+    id: 'daily-exec-1',
+    projectId: 'project-1',
+    activityId: 'act-1',
+    activityName: 'Excavación para cimientos',
+    executedQuantity: 20,
+    date: '2024-12-25',
+    notes: 'Avance según lo programado',
+    issueCategory: 'Sin novedad' as const
+  }
 ];

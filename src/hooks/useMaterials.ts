@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { Material } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { mockMaterials, mockMaterialCatalog } from "@/lib/mock-data";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export const useMaterials = (initialProjectId?: string) => {
@@ -14,33 +15,21 @@ export const useMaterials = (initialProjectId?: string) => {
     if (!projectId) return [];
     
     try {
-      const { data: projectMaterials, error } = await supabase
-        .from('project_materials')
-        .select(`
-          id,
-          material_id,
-          estimated_quantity,
-          received_quantity,
-          used_quantity,
-          material_catalog (
-            name,
-            unit
-          )
-        `)
-        .eq('project_id', projectId);
+      // Simulate async loading
+      await new Promise(resolve => setTimeout(resolve, 100));
       
-      if (error) throw error;
+      // Filter mock materials by project ID and enrich with catalog data
+      const projectMaterials = mockMaterials
+        .filter(material => material.projectId === projectId)
+        .map(material => {
+          const catalogItem = mockMaterialCatalog.find(cat => cat.name === material.name);
+          return {
+            ...material,
+            materialCatalogId: catalogItem?.id
+          };
+        });
       
-      return projectMaterials.map(item => ({
-        id: item.id,
-        projectId,
-        name: item.material_catalog.name,
-        unit: item.material_catalog.unit,
-        estimatedQuantity: item.estimated_quantity,
-        receivedQuantity: item.received_quantity,
-        usedQuantity: item.used_quantity,
-        materialCatalogId: item.material_id
-      }));
+      return projectMaterials;
     } catch (error) {
       console.error("Error fetching materials:", error);
       throw error;
@@ -51,7 +40,7 @@ export const useMaterials = (initialProjectId?: string) => {
     queryKey: ['materials', initialProjectId],
     queryFn: () => fetchMaterials(initialProjectId),
     enabled: !!initialProjectId,
-    staleTime: 0 // Always fetch fresh data when project changes
+    staleTime: 0
   });
 
   // Update materials state when query data changes
@@ -63,17 +52,26 @@ export const useMaterials = (initialProjectId?: string) => {
 
   const addMaterialMutation = useMutation({
     mutationFn: async ({ projectId, materialId, quantity }: { projectId: string, materialId: string, quantity: number }) => {
-      const { data, error } = await supabase
-        .from('project_materials')
-        .insert({
-          project_id: projectId,
-          material_id: materialId,
-          estimated_quantity: quantity
-        })
-        .select('*');
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      if (error) throw error;
-      return data[0];
+      const catalogItem = mockMaterialCatalog.find(cat => cat.id === materialId);
+      if (!catalogItem) throw new Error("Material no encontrado en el catálogo");
+      
+      const newMaterial: Material = {
+        id: `mat-${Date.now()}`,
+        projectId,
+        name: catalogItem.name,
+        unit: catalogItem.unit,
+        estimatedQuantity: quantity,
+        receivedQuantity: 0,
+        usedQuantity: 0,
+        materialCatalogId: materialId
+      };
+      
+      // Add to mock data
+      mockMaterials.push(newMaterial);
+      return newMaterial;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['materials', materials[0]?.projectId] });
@@ -93,22 +91,18 @@ export const useMaterials = (initialProjectId?: string) => {
 
   const updateMaterialMutation = useMutation({
     mutationFn: async ({ id, field, value }: { id: string, field: keyof Material, value: string | number }) => {
-      const fieldMapping: Record<string, string> = {
-        estimatedQuantity: 'estimated_quantity',
-        receivedQuantity: 'received_quantity',
-        usedQuantity: 'used_quantity',
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const materialIndex = mockMaterials.findIndex(m => m.id === id);
+      if (materialIndex === -1) throw new Error("Material no encontrado");
+      
+      mockMaterials[materialIndex] = {
+        ...mockMaterials[materialIndex],
+        [field]: value
       };
       
-      const dbField = fieldMapping[field] || field;
-      
-      const { data, error } = await supabase
-        .from('project_materials')
-        .update({ [dbField]: value })
-        .eq('id', id)
-        .select();
-      
-      if (error) throw error;
-      return data[0];
+      return mockMaterials[materialIndex];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['materials', materials[0]?.projectId] });
@@ -124,12 +118,13 @@ export const useMaterials = (initialProjectId?: string) => {
 
   const deleteMaterialMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('project_materials')
-        .delete()
-        .eq('id', id);
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      if (error) throw error;
+      const materialIndex = mockMaterials.findIndex(m => m.id === id);
+      if (materialIndex === -1) throw new Error("Material no encontrado");
+      
+      mockMaterials.splice(materialIndex, 1);
       return id;
     },
     onSuccess: () => {
